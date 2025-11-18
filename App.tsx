@@ -10,6 +10,7 @@ import { playSound } from './sounds';
 declare var confetti: any;
 
 const App: React.FC = () => {
+  const [isLandingPage, setIsLandingPage] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [inputStates, setInputStates] = useState<Record<string, InputState>>({});
   const [wrongHistory, setWrongHistory] = useState<Set<string>>(new Set());
@@ -215,7 +216,7 @@ const App: React.FC = () => {
 
   // --- Logic B: Auto-Tab Transition ---
   useEffect(() => {
-    if (isTransitioningRef.current) return;
+    if (isTransitioningRef.current || isLandingPage) return;
 
     // Check if current tab is complete
     const currentSection = SECTIONS[activeTab];
@@ -282,7 +283,7 @@ const App: React.FC = () => {
         }
       }, 1000);
     }
-  }, [inputStates, activeTab]);
+  }, [inputStates, activeTab, isLandingPage]);
 
 
   // --- Render Helpers ---
@@ -421,16 +422,70 @@ const App: React.FC = () => {
     );
   };
 
+  // --- VIEW: LANDING PAGE ---
+  if (isLandingPage) {
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 relative overflow-hidden">
+            {/* Background decorative elements */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}} />
+            </div>
+
+            <div className="max-w-2xl w-full bg-card/50 backdrop-blur-sm border border-border/50 p-10 rounded-[2.5rem] shadow-2xl text-center animate-in fade-in zoom-in duration-500">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground mb-8 shadow-lg shadow-primary/30">
+                    <BookOpen size={40} strokeWidth={2.5} />
+                </div>
+                
+                <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 tracking-tight leading-tight">
+                    2025 대구미래역량교육
+                </h1>
+                
+                <p className="text-xl text-muted-foreground mb-12 leading-relaxed font-medium">
+                    미래를 배우고 함께 성장하는<br/>
+                    대구교육의 핵심 가치를 학습해보세요.
+                </p>
+                
+                <div className="flex flex-col gap-4 items-center w-full">
+                    <button 
+                        onClick={() => {
+                            playSound('complete');
+                            setIsLandingPage(false);
+                        }}
+                        className="w-full max-w-md group relative flex items-center justify-between px-8 py-5 bg-primary hover:bg-primary/90 text-primary-foreground text-xl font-bold rounded-2xl transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/25 active:scale-95"
+                    >
+                        <span className="flex-1 text-center">Ⅱ 대구교육의 방향</span>
+                        <div className="bg-white/20 rounded-full p-1 group-hover:translate-x-1 transition-transform">
+                            <ChevronRight size={24} />
+                        </div>
+                    </button>
+                </div>
+            </div>
+            
+            <div className="absolute bottom-8 text-muted-foreground text-sm font-medium opacity-60">
+                Daegu Metropolitan Office of Education
+            </div>
+        </div>
+    );
+  }
+
+  // --- VIEW: LEARNING APP ---
   return (
     <div className="min-h-screen flex flex-col items-center pb-20 bg-background">
       {/* Header */}
       <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
-        <div className="flex items-center gap-3">
+        <button 
+            onClick={() => {
+                if(confirm("첫 화면으로 돌아가시겠습니까?")) setIsLandingPage(true);
+            }}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            title="첫 화면으로"
+        >
           <div className="bg-primary p-2 rounded-lg">
              <BookOpen className="w-6 h-6 text-primary-foreground" />
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">2025 대구미래역량교육</h1>
-        </div>
+        </button>
         <div className="flex items-center gap-3 sm:gap-4">
             {wrongHistory.size > 0 && (
                 <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-full border border-destructive/20 text-destructive text-sm font-medium animate-pulse">
