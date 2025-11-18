@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { BookOpen, CheckCircle, ChevronRight, AlertTriangle, Lightbulb, Target, Shield, Users, Heart, Eye } from 'lucide-react';
-import { SECTIONS } from './constants';
+import { BookOpen, CheckCircle, ChevronRight, AlertTriangle, Lightbulb, Target, Shield, Users, Heart, Eye, RotateCcw, Home, List } from 'lucide-react';
+import { SECTIONS, INTRO_CONTENT } from './constants';
 import { InputState, STORAGE_KEY } from './types';
 import { ClozeInput } from './components/ClozeInput';
 import { playSound } from './sounds';
@@ -11,6 +11,7 @@ declare var confetti: any;
 
 const App: React.FC = () => {
   const [isLandingPage, setIsLandingPage] = useState(true);
+  const [showIntroQuiz, setShowIntroQuiz] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [inputStates, setInputStates] = useState<Record<string, InputState>>({});
   const [wrongHistory, setWrongHistory] = useState<Set<string>>(new Set());
@@ -49,6 +50,27 @@ const App: React.FC = () => {
   const parseAndInitContent = useCallback(() => {
     const initialStates: Record<string, InputState> = {};
     
+    // Parse Intro Content
+    INTRO_CONTENT.forEach((line, lineIdx) => {
+      const regex = /\[(.*?)\]/g;
+      let match;
+      let matchCount = 0;
+      while ((match = regex.exec(line)) !== null) {
+        const answer = match[1];
+        const id = `intro-${lineIdx}-${matchCount}`;
+        initialStates[id] = {
+          id,
+          value: '',
+          status: 'idle',
+          attempts: 0,
+          disabled: false,
+          answer: answer.trim(),
+        };
+        matchCount++;
+      }
+    });
+
+    // Parse Main Sections
     SECTIONS.forEach((section, secIdx) => {
       section.content.forEach((line, lineIdx) => {
         const regex = /\[(.*?)\]/g;
@@ -89,25 +111,57 @@ const App: React.FC = () => {
   };
 
   const focusNextInput = (currentId: string) => {
-    // Find all inputs in current tab
-    const currentSection = SECTIONS[activeTab];
-    const currentInputs: string[] = [];
-    
-    currentSection.content.forEach((line, lineIdx) => {
-       const regex = /\[(.*?)\]/g;
-       let matchCount = 0;
-       while (regex.exec(line) !== null) {
-         currentInputs.push(`${activeTab}-${lineIdx}-${matchCount}`);
-         matchCount++;
-       }
-    });
+    // Determine context (Intro vs Main)
+    let currentInputs: string[] = [];
+
+    if (showIntroQuiz) {
+        // Gather all intro IDs
+        INTRO_CONTENT.forEach((line, lineIdx) => {
+            const regex = /\[(.*?)\]/g;
+            let matchCount = 0;
+            while (regex.exec(line) !== null) {
+                currentInputs.push(`intro-${lineIdx}-${matchCount}`);
+                matchCount++;
+            }
+        });
+    } else {
+        // Find all inputs in current tab in sequential order
+        const currentSection = SECTIONS[activeTab];
+        if (currentSection) {
+            currentSection.content.forEach((line, lineIdx) => {
+            const regex = /\[(.*?)\]/g;
+            let matchCount = 0;
+            while (regex.exec(line) !== null) {
+                currentInputs.push(`${activeTab}-${lineIdx}-${matchCount}`);
+                matchCount++;
+            }
+            });
+        }
+    }
 
     const currentIndex = currentInputs.indexOf(currentId);
-    if (currentIndex !== -1 && currentIndex < currentInputs.length - 1) {
-      // Focus next in same tab
-      const nextId = currentInputs[currentIndex + 1];
-      const el = document.getElementById(`input-${nextId}`);
-      el?.focus();
+    
+    if (currentIndex !== -1) {
+      // Search for the next *enabled* input (skip completed/disabled ones)
+      let nextId: string | null = null;
+      
+      for (let i = currentIndex + 1; i < currentInputs.length; i++) {
+          const candidateId = currentInputs[i];
+          // Check if the input is still editable (not disabled)
+          if (!inputStates[candidateId]?.disabled) {
+              nextId = candidateId;
+              break;
+          }
+      }
+
+      if (nextId) {
+        const el = document.getElementById(`input-${nextId}`);
+        if (el) {
+          el.focus();
+          // Smoothly scroll the next input into the center of the view
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
     }
   };
 
@@ -144,19 +198,19 @@ const App: React.FC = () => {
 
     if (newAttempts === 1) {
       // 1st Wrong
-      playSound('wrong-1'); // NEW: Warning Sound
+      playSound('wrong-1'); // Warning Sound
       setInputStates(prev => ({
         ...prev,
         [id]: { 
           ...prev[id], 
           status: 'wrong-1', 
-          attempts: newAttempts,
+          attempts: newAttempts, 
           value: '' // Clear immediately
         }
       }));
     } else {
       // 2nd Wrong (Fail)
-      playSound('wrong-2'); // NEW: Fail Sound
+      playSound('wrong-2'); // Fail Sound
       // Add to history
       const newHistory = new Set(wrongHistory);
       newHistory.add(id);
@@ -182,15 +236,23 @@ const App: React.FC = () => {
 
   // Reveal All Logic
   const revealAllAnswers = () => {
-    // Removed confirm to ensure immediate action
     const nextStates = { ...inputStates };
-    // Note: We intentionally DO NOT add to wrongHistory here based on requirements.
     let changed = false;
 
-    // Mark all tabs as completed to prevent auto-transition cascade
-    SECTIONS.forEach((_, idx) => completedTabsRef.current.add(idx));
+    // Determine scope of reveal based on view
+    const keysToReveal = Object.keys(nextStates).filter(key => {
+        if (showIntroQuiz) return key.startsWith('intro-');
+        return key.startsWith(`${activeTab}-`); // Only reveal current tab in main view to avoid spoilers
+    });
+    
+    // Actually, user requested "Reveal All" for all sections in main view. 
+    // But for intro quiz, it should only reveal intro.
+    const allKeys = Object.keys(nextStates);
+    const targetKeys = showIntroQuiz 
+        ? allKeys.filter(k => k.startsWith('intro-')) 
+        : allKeys.filter(k => !k.startsWith('intro-')); // Reveal all main content if in main view
 
-    Object.keys(nextStates).forEach(id => {
+    targetKeys.forEach(id => {
       const state = nextStates[id];
       if (state.status !== 'correct' && state.status !== 'wrong-2') {
         nextStates[id] = {
@@ -199,26 +261,51 @@ const App: React.FC = () => {
           value: state.answer,
           disabled: true
         };
-        // Explicitly NOT adding to history here
         changed = true;
       }
     });
 
+    // If in main view, prevent auto-transitions by marking tabs as done
+    if (!showIntroQuiz) {
+         SECTIONS.forEach((_, idx) => completedTabsRef.current.add(idx));
+    }
+
     if (changed) {
       setInputStates(nextStates);
-      // Do not update history or localStorage
-      playSound('complete'); // Play a sound to indicate action complete
-      setShowToast({ message: "모든 정답이 공개되었습니다.", type: "info" });
+      playSound('complete'); 
+      setShowToast({ message: "정답이 공개되었습니다.", type: "info" });
     } else {
       setShowToast({ message: "이미 모든 정답이 공개되었습니다.", type: "info" });
     }
   };
 
-  // --- Logic B: Auto-Tab Transition ---
+  // --- Logic B: Auto-Tab / Intro Transition ---
   useEffect(() => {
     if (isTransitioningRef.current || isLandingPage) return;
 
-    // Check if current tab is complete
+    // 1. INTRO QUIZ COMPLETION LOGIC
+    if (showIntroQuiz) {
+        const introIds = Object.keys(inputStates).filter(k => k.startsWith('intro-'));
+        if (introIds.length > 0 && introIds.every(id => inputStates[id].disabled)) {
+             isTransitioningRef.current = true;
+             setShowToast({ message: "목차 학습 완료!", type: "success" });
+             playSound('complete');
+             
+             setTimeout(() => {
+                 setShowIntroQuiz(false); // Move to Main App
+                 isTransitioningRef.current = false;
+                 setShowToast(null);
+                 // Focus first input of first tab
+                 setTimeout(() => {
+                     const firstInput = document.querySelector(`#tab-content-0 input`) as HTMLInputElement;
+                     firstInput?.focus();
+                 }, 100);
+             }, 1500);
+        }
+        return;
+    }
+
+    // 2. MAIN APP TAB COMPLETION LOGIC
     const currentSection = SECTIONS[activeTab];
     if (!currentSection) return;
 
@@ -239,16 +326,13 @@ const App: React.FC = () => {
     const allComplete = tabInputIds.every(id => inputStates[id]?.disabled);
 
     if (allComplete) {
-      // Prevent re-triggering if we just navigated to an already completed tab
       if (completedTabsRef.current.has(activeTab)) {
         return;
       }
 
-      // Mark as processed
       completedTabsRef.current.add(activeTab);
       isTransitioningRef.current = true;
 
-      // 1. Toast
       setShowToast({ message: "Section Complete!", type: "success" });
       playSound('complete');
       if (typeof confetti === 'function') {
@@ -259,36 +343,62 @@ const App: React.FC = () => {
           });
       }
 
-      // 2. 1.0s Delay
       setTimeout(() => {
-        // 3. Switch Tab
-        if (activeTab < SECTIONS.length - 1) {
+        // Check Global Completion (Excluding Intro)
+        const mainInputs = (Object.values(inputStates) as InputState[])
+            .filter(s => !s.id.startsWith('intro-'));
+        const allInputsDisabled = mainInputs.every(s => s.disabled);
+
+        if (allInputsDisabled) {
+          playSound('finish');
+          setShowToast({ message: "모든 학습을 완료했습니다!", type: "success" });
+          isTransitioningRef.current = false;
+        } else if (activeTab < SECTIONS.length - 1) {
           const nextTab = activeTab + 1;
           setActiveTab(nextTab);
           
-          // 4. Focus first input of next tab
           setTimeout(() => {
-            const firstInputNextTab = document.querySelector(`#tab-content-${nextTab} input`) as HTMLInputElement;
-            if (firstInputNextTab) {
-                firstInputNextTab.focus();
+            const nextSection = SECTIONS[nextTab];
+            const nextTabIds: string[] = [];
+            nextSection.content.forEach((line, lineIdx) => {
+                const regex = /\[(.*?)\]/g;
+                let matchCount = 0;
+                while (regex.exec(line) !== null) {
+                    nextTabIds.push(`${nextTab}-${lineIdx}-${matchCount}`);
+                    matchCount++;
+                }
+            });
+
+            const firstAvailableId = nextTabIds.find(id => !inputStates[id]?.disabled);
+            if (firstAvailableId) {
+                const el = document.getElementById(`input-${firstAvailableId}`);
+                if (el) {
+                    el.focus();
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } else {
+                const el = document.querySelector(`#tab-content-${nextTab} input`) as HTMLInputElement;
+                if (el) {
+                    el.focus();
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
+
             isTransitioningRef.current = false;
             setShowToast(null);
           }, 100);
         } else {
-          // All finished
-          playSound('finish');
-          setShowToast({ message: "모든 학습을 완료했습니다!", type: "success" });
           isTransitioningRef.current = false;
+          setShowToast(null);
         }
       }, 1000);
     }
-  }, [inputStates, activeTab, isLandingPage]);
+  }, [inputStates, activeTab, isLandingPage, showIntroQuiz]);
 
 
   // --- Render Helpers ---
 
-  const renderLine = (text: string, secIdx: number, lineIdx: number) => {
+  const renderLine = (text: string, secIdx: number | string, lineIdx: number) => {
     const parts: React.ReactNode[] = [];
     const regex = /\[(.*?)\]/g;
     let lastIndex = 0;
@@ -296,7 +406,6 @@ const App: React.FC = () => {
     let matchCount = 0;
 
     while ((match = regex.exec(text)) !== null) {
-      // Add text before match
       if (match.index > lastIndex) {
         parts.push(text.substring(lastIndex, match.index));
       }
@@ -323,7 +432,6 @@ const App: React.FC = () => {
       matchCount++;
     }
 
-    // Add remaining text
     if (lastIndex < text.length) {
       parts.push(text.substring(lastIndex));
     }
@@ -338,7 +446,6 @@ const App: React.FC = () => {
     // Layout for 'strategies': Title + Content pairs
     if (section.id === 'strategies') {
         const blocks = [];
-        // Icons for each strategy to add visual flair
         const icons = [
             <Heart className="text-primary" size={32} />, 
             <Lightbulb className="text-yellow-400" size={32} />, 
@@ -451,6 +558,7 @@ const App: React.FC = () => {
                         onClick={() => {
                             playSound('complete');
                             setIsLandingPage(false);
+                            setShowIntroQuiz(true); // Start Intro Quiz instead of going straight to app
                         }}
                         className="w-full max-w-md group relative flex items-center justify-between px-8 py-5 bg-primary hover:bg-primary/90 text-primary-foreground text-xl font-bold rounded-2xl transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/25 active:scale-95"
                     >
@@ -469,14 +577,77 @@ const App: React.FC = () => {
     );
   }
 
-  // --- VIEW: LEARNING APP ---
+  // --- VIEW: INTRO QUIZ ---
+  if (showIntroQuiz) {
+      return (
+        <div className="min-h-screen flex flex-col items-center pb-20 bg-background">
+            <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
+                 <button 
+                    onClick={() => {
+                        if(confirm("첫 화면으로 돌아가시겠습니까?")) {
+                            setShowIntroQuiz(false);
+                            setIsLandingPage(true);
+                        }
+                    }}
+                    className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                >
+                    <div className="bg-primary p-2 rounded-lg">
+                        <BookOpen className="w-6 h-6 text-primary-foreground" />
+                    </div>
+                    <h1 className="text-xl font-bold text-foreground">2025 대구미래역량교육</h1>
+                </button>
+                 <div className="flex items-center gap-2">
+                     <button 
+                        onClick={revealAllAnswers}
+                        className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground text-sm font-medium transition-colors"
+                    >
+                        <Eye size={18} />
+                        <span className="hidden sm:inline">정답 보기</span>
+                    </button>
+                 </div>
+            </header>
+            
+            <main className="w-full max-w-3xl p-6 md:p-12 flex-1 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <div className="bg-card p-10 rounded-[2.5rem] border border-border shadow-xl w-full text-center">
+                    <div className="mb-8 flex flex-col items-center">
+                        <div className="bg-secondary p-4 rounded-full mb-4 text-secondary-foreground">
+                            <List size={32} />
+                        </div>
+                        <h2 className="text-3xl font-bold text-foreground mb-2">목차 학습</h2>
+                        <p className="text-muted-foreground">빈칸을 채워 대구교육의 방향 목차를 완성하세요.</p>
+                    </div>
+                    
+                    <div className="space-y-4 text-left inline-block">
+                        {INTRO_CONTENT.map((line, idx) => (
+                            <div key={idx} className="text-[1.9rem] leading-[3.5rem] font-bold text-card-foreground pl-4 border-l-4 border-primary/20 hover:border-primary transition-colors">
+                                {renderLine(line, 'intro', idx)}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </main>
+            
+            {showToast && (
+                <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-8 py-4 rounded-full shadow-2xl shadow-primary/30 flex items-center gap-4 z-50 animate-bounce-gentle">
+                    <div className="bg-white/20 p-1 rounded-full"><CheckCircle size={24} /></div>
+                    <span className="text-xl font-bold">{showToast.message}</span>
+                </div>
+            )}
+        </div>
+      );
+  }
+
+  // --- VIEW: MAIN LEARNING APP ---
   return (
     <div className="min-h-screen flex flex-col items-center pb-20 bg-background">
       {/* Header */}
       <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
         <button 
             onClick={() => {
-                if(confirm("첫 화면으로 돌아가시겠습니까?")) setIsLandingPage(true);
+                if(confirm("첫 화면으로 돌아가시겠습니까?")) {
+                    setIsLandingPage(true);
+                    setShowIntroQuiz(false);
+                }
             }}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             title="첫 화면으로"

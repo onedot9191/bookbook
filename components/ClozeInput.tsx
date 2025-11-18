@@ -20,8 +20,7 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
   const prevStatusRef = useRef<string>(state.status);
 
   // Calculate width based on answer length
-  // Adjusted calculation: Reduced multiplier from 1.3 to 1.15 and buffer from 5rem to 3.5rem
-  // to tighten the width while still accommodating Korean characters.
+  // Width calculation remains constant based on answer length
   const widthStyle = {
     width: `calc(${state.answer.length * 1.15}ch + 3.5rem)`,
   };
@@ -48,14 +47,14 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
 
   // Determine specific visual styles based on state
   let statusClasses = "";
-  let bgClass = "bg-input"; // Default background (Restored to bg-input)
+  let bgClass = "bg-input"; // Default background
 
   if (state.status === 'correct') {
-    statusClasses = "border-emerald-500 text-emerald-400 font-bold";
+    // Removed font-bold to prevent width shift (ch unit depends on font weight)
+    statusClasses = "border-emerald-500 text-emerald-400"; 
     bgClass = "bg-emerald-500/20";
   } else if (state.status === 'wrong-1') {
     statusClasses = "border-orange-500 animate-shake text-foreground focus:border-orange-500";
-    // Keep default background
   } else if (state.status === 'wrong-2') {
     statusClasses = "border-destructive animate-shake text-destructive";
     bgClass = "bg-red-500/30"; // Strong Red for Fail/Reveal
