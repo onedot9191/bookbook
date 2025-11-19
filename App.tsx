@@ -545,7 +545,7 @@ const App: React.FC = () => {
                 </div>
                 
                 <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 tracking-tight leading-tight">
-                    2025 대구미래역량교육
+                    2025 대구 미래역량 교육
                 </h1>
                 
                 <p className="text-xl text-muted-foreground mb-12 leading-relaxed font-medium">
@@ -592,7 +592,7 @@ const App: React.FC = () => {
                     <div className="bg-primary p-2 rounded-lg">
                         <BookOpen className="w-6 h-6 text-primary-foreground" />
                     </div>
-                    <h1 className="text-xl font-bold text-foreground">2025 대구미래역량교육</h1>
+                    <h1 className="text-xl font-bold text-foreground">2025 대구 미래역량 교육</h1>
                 </button>
                  <div className="flex items-center gap-2">
                      <button 
@@ -651,7 +651,7 @@ const App: React.FC = () => {
           <div className="bg-primary p-2 rounded-lg">
              <BookOpen className="w-6 h-6 text-primary-foreground" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">2025 대구미래역량교육</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">2025 대구 미래역량 교육</h1>
         </button>
         <div className="flex items-center gap-3 sm:gap-4">
             {wrongHistory.size > 0 && (
