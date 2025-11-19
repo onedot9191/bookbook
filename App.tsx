@@ -584,10 +584,8 @@ const App: React.FC = () => {
             <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
                  <button 
                     onClick={() => {
-                        if(confirm("첫 화면으로 돌아가시겠습니까?")) {
-                            setShowIntroQuiz(false);
-                            setIsLandingPage(true);
-                        }
+                        setShowIntroQuiz(false);
+                        setIsLandingPage(true);
                     }}
                     className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                 >
@@ -644,10 +642,8 @@ const App: React.FC = () => {
       <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
         <button 
             onClick={() => {
-                if(confirm("첫 화면으로 돌아가시겠습니까?")) {
-                    setIsLandingPage(true);
-                    setShowIntroQuiz(false);
-                }
+                setIsLandingPage(true);
+                setShowIntroQuiz(false);
             }}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             title="첫 화면으로"
