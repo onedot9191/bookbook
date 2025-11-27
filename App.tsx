@@ -100,6 +100,16 @@ const App: React.FC = () => {
     setInputStates(parseAndInitContent());
   }, [parseAndInitContent]);
 
+  // Reset function: 초기화 (오답 기록은 유지)
+  const resetToInitialState = useCallback(() => {
+    setActiveTab(0);
+    setInputStates(parseAndInitContent());
+    setShowToast(null);
+    isTransitioningRef.current = false;
+    completedTabsRef.current.clear();
+    setIsLandingPage(true);
+    setShowIntroQuiz(false);
+  }, [parseAndInitContent]);
 
   // --- Core Logic ---
 
@@ -170,8 +180,12 @@ const App: React.FC = () => {
     const inputVal = currentState.value.trim();
     const correctVal = currentState.answer;
 
-    // Logic A-1: Correct
-    if (inputVal === correctVal) {
+    // 띄어쓰기 제거 후 비교 (허용답안 인정)
+    const normalizedInput = inputVal.replace(/\s+/g, '');
+    const normalizedAnswer = correctVal.replace(/\s+/g, '');
+
+    // Logic A-1: Correct (띄어쓰기 무시 비교)
+    if (normalizedInput === normalizedAnswer) {
       playSound('correct');
       // Remove from history
       if (wrongHistory.has(id)) {
@@ -181,9 +195,15 @@ const App: React.FC = () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(newHistory)));
       }
 
+      // 정답 처리 후 모범답안 표시 (띄어쓰기가 다를 수 있으므로)
       setInputStates(prev => ({
         ...prev,
-        [id]: { ...prev[id], status: 'correct', disabled: true }
+        [id]: { 
+          ...prev[id], 
+          status: 'correct', 
+          disabled: true,
+          value: correctVal // 모범답안으로 표시
+        }
       }));
 
       // Proceed: 0.1s delay then focus next
@@ -323,7 +343,12 @@ const App: React.FC = () => {
     if (tabInputIds.length === 0) return;
 
     // Check if all are disabled (completed or failed)
-    const allComplete = tabInputIds.every(id => inputStates[id]?.disabled);
+    // 모든 입력이 존재하고 비활성화되었는지 확인
+    const allComplete = tabInputIds.length > 0 && 
+                        tabInputIds.every(id => {
+                          const state = inputStates[id];
+                          return state && (state.disabled || state.status === 'correct' || state.status === 'wrong-2');
+                        });
 
     if (allComplete) {
       if (completedTabsRef.current.has(activeTab)) {
@@ -398,12 +423,12 @@ const App: React.FC = () => {
 
   // --- Render Helpers ---
 
-  const renderLine = (text: string, secIdx: number | string, lineIdx: number) => {
+  const renderLine = (text: string, secIdx: number | string, lineIdx: number, matchOffset: number = 0) => {
     const parts: React.ReactNode[] = [];
     const regex = /\[(.*?)\]/g;
     let lastIndex = 0;
     let match;
-    let matchCount = 0;
+    let matchCount = matchOffset;
 
     while ((match = regex.exec(text)) !== null) {
       if (match.index > lastIndex) {
@@ -515,6 +540,47 @@ const App: React.FC = () => {
         );
     }
 
+    // Layout for sections with "A: B" format (competencies, principles, goals)
+    if (section.id === 'competencies' || section.id === 'principles' || section.id === 'goals') {
+        return (
+            <div className="space-y-6">
+                {section.content.map((line, idx) => {
+                    // "A: B" 형식을 파싱하여 키워드와 설명 분리
+                    const colonIndex = line.indexOf(':');
+                    if (colonIndex === -1) {
+                        // 콜론이 없으면 기존 방식으로 렌더링
+                        return (
+                            <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
+                                <div className={commonTextClass}>
+                                    {renderLine(line, activeTab, idx)}
+                                </div>
+                            </div>
+                        );
+                    }
+                    
+                    const keyword = line.substring(0, colonIndex).trim();
+                    const description = line.substring(colonIndex + 1).trim();
+                    
+                    // 키워드 부분의 [ ] 패턴 개수를 세어서 설명 부분의 matchOffset 계산
+                    const keywordMatches = (keyword.match(/\[(.*?)\]/g) || []).length;
+                    
+                    return (
+                        <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
+                            <div className="mb-4 pb-4 border-b border-border/50">
+                                <div className={`${commonTextClass} text-primary font-bold text-[2.1rem]`}>
+                                    {renderLine(keyword, activeTab, idx, 0)}
+                                </div>
+                            </div>
+                            <div className={commonTextClass}>
+                                {renderLine(description, activeTab, idx, keywordMatches)}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    }
+
     // Layout for other sections (List items)
     return (
         <div className="space-y-6">
@@ -583,10 +649,7 @@ const App: React.FC = () => {
         <div className="min-h-screen flex flex-col items-center pb-20 bg-background">
             <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
                  <button 
-                    onClick={() => {
-                        setShowIntroQuiz(false);
-                        setIsLandingPage(true);
-                    }}
+                    onClick={resetToInitialState}
                     className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                 >
                     <div className="bg-primary p-2 rounded-lg">
@@ -641,10 +704,7 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
         <button 
-            onClick={() => {
-                setIsLandingPage(true);
-                setShowIntroQuiz(false);
-            }}
+            onClick={resetToInitialState}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             title="첫 화면으로"
         >
@@ -703,22 +763,6 @@ const App: React.FC = () => {
         {/* Dynamic Content Block Render */}
         <div id={`tab-content-${activeTab}`} className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
              {renderContentBlocks()}
-        </div>
-        
-        {/* Manual Next Button */}
-        <div className="mt-16 flex justify-center">
-            <button 
-                onClick={() => {
-                    if (activeTab < SECTIONS.length - 1) setActiveTab(p => p + 1);
-                }}
-                className={`
-                    group flex items-center gap-3 text-muted-foreground hover:text-foreground transition-all px-6 py-3 rounded-full hover:bg-muted
-                    ${activeTab === SECTIONS.length - 1 ? 'hidden' : ''}
-                `}
-            >
-                <span className="font-medium">다음 섹션으로 넘어가기</span>
-                <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform"/>
-            </button>
         </div>
 
       </main>
