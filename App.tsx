@@ -540,8 +540,84 @@ const App: React.FC = () => {
         );
     }
 
-    // Layout for sections with "A: B" format (competencies, principles, goals)
-    if (section.id === 'competencies' || section.id === 'principles' || section.id === 'goals') {
+    // Layout for 'principles': 파트별 시각적 구분
+    if (section.id === 'principles') {
+        const parts: Array<{title: string, titleLineIdx: number, definition: string, meaning: string, defLineIdx: number, meanLineIdx: number}> = [];
+        let currentPart: {title: string, titleLineIdx: number, definition: string, meaning: string, defLineIdx: number, meanLineIdx: number} | null = null;
+
+        section.content.forEach((line, idx) => {
+            // 빈 줄 건너뛰기
+            if (!line.trim()) return;
+            
+            // 헤더 감지 (#[주도성], #[관계성], #[자율성])
+            if (line.startsWith('#')) {
+                if (currentPart) {
+                    parts.push(currentPart);
+                }
+                currentPart = {
+                    title: line.substring(1), // "#" 제거, "[주도성]" 형태로 저장
+                    titleLineIdx: idx,
+                    definition: '',
+                    meaning: '',
+                    defLineIdx: -1,
+                    meanLineIdx: -1
+                };
+            } else if (currentPart && line.startsWith('정의:')) {
+                currentPart.definition = line.substring(3).trim(); // "정의: " 제거
+                currentPart.defLineIdx = idx;
+            } else if (currentPart && line.startsWith('의의:')) {
+                currentPart.meaning = line.substring(3).trim(); // "의의: " 제거
+                currentPart.meanLineIdx = idx;
+            }
+        });
+        
+        if (currentPart) {
+            parts.push(currentPart);
+        }
+
+        return (
+            <div className="space-y-8">
+                {parts.map((part, partIdx) => {
+                    // 정의 부분의 [ ] 패턴 개수 계산
+                    const defMatches = (part.definition.match(/\[(.*?)\]/g) || []).length;
+                    
+                    return (
+                        <div key={partIdx} className="bg-gradient-to-br from-card to-card/50 p-10 rounded-3xl border-2 border-primary/20 shadow-lg hover:shadow-xl hover:border-primary/40 transition-all">
+                            {/* 파트 헤더 */}
+                            <div className="mb-6 pb-4 border-b-2 border-primary/30">
+                                <h3 className={`${commonTextClass} text-primary font-bold text-[2.3rem]`}>
+                                    {renderLine(part.title, activeTab, part.titleLineIdx, 0)}
+                                </h3>
+                            </div>
+                            
+                            {/* 정의 섹션 */}
+                            <div className="mb-6 pb-6 border-b border-border/50">
+                                <div className="inline-block px-4 py-2 mb-4 rounded-lg bg-primary/10 border border-primary/20">
+                                    <span className="text-primary font-bold text-lg">정의</span>
+                                </div>
+                                <div className={commonTextClass}>
+                                    {renderLine(part.definition, activeTab, part.defLineIdx, 0)}
+                                </div>
+                            </div>
+                            
+                            {/* 의의 섹션 */}
+                            <div>
+                                <div className="inline-block px-4 py-2 mb-4 rounded-lg bg-primary/10 border border-primary/20">
+                                    <span className="text-primary font-bold text-lg">의의</span>
+                                </div>
+                                <div className={commonTextClass}>
+                                    {renderLine(part.meaning, activeTab, part.meanLineIdx, defMatches)}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    }
+
+    // Layout for sections with "A: B" format (competencies, goals)
+    if (section.id === 'competencies' || section.id === 'goals') {
         return (
             <div className="space-y-6">
                 {section.content.map((line, idx) => {
