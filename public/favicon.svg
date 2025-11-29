@@ -1,3 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <!-- 황금색 배경 -->
+  <rect x="2" y="2" width="20" height="20" rx="3" fill="url(#goldGradient)"/>
+  <!-- 밝은 흰색 책 윤곽선 -->
+  <path d="M8 6v12M16 6v12M8 6h8M8 18h8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="7" y1="20" x2="17" y2="20" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <!-- 그라데이션 정의 -->
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:rgb(255,215,80);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgb(230,180,50);stop-opacity:1" />
+    </linearGradient>
+  </defs>
 </svg>
