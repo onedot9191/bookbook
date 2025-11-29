@@ -18,14 +18,14 @@ def create_book_icon(size):
     img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     
-    # 황금색/갈색 그라데이션 배경 (둥근 사각형)
-    # 상단이 밝고 하단이 어두운 그라데이션 효과
+    # 밝은 황금색/갈색 그라데이션 배경 (둥근 사각형)
+    # 상단이 더 밝고 하단이 약간 어두운 그라데이션 효과로 가독성 향상
     for y in range(size):
-        # 그라데이션 색상 계산 (황금색 계열)
+        # 그라데이션 색상 계산 (밝은 황금색 계열)
         ratio = y / size
-        r = int(218 + (184 - 218) * ratio)  # 218 -> 184
-        g = int(165 + (134 - 165) * ratio)  # 165 -> 134
-        b = int(32 + (11 - 32) * ratio)     # 32 -> 11
+        r = int(255 + (230 - 255) * ratio)  # 255 -> 230 (더 밝게)
+        g = int(215 + (180 - 215) * ratio)  # 215 -> 180
+        b = int(80 + (50 - 80) * ratio)     # 80 -> 50
         draw.rectangle([(size*0.1, y), (size*0.9, y+1)], fill=(r, g, b, 255))
     
     # 둥근 모서리 효과를 위한 마스크
@@ -37,22 +37,43 @@ def create_book_icon(size):
     # 마스크 적용
     img.putalpha(mask)
     
-    # 책 윤곽선 그리기 (어두운 색)
-    line_color = (30, 30, 50, 255)  # 어두운 남색
-    line_width = max(1, size // 20)
+    # 책 윤곽선 그리기 (밝은 색으로 변경 - 가독성 향상)
+    # 밝은 흰색으로 변경하여 다크 배경에서 잘 보이도록
+    line_color = (255, 255, 255, 255)  # 밝은 흰색
+    line_width = max(2, size // 15)  # 선 두께 증가
     
-    # 왼쪽 페이지
+    # 위치 계산
     left_x = size * 0.35
-    draw.line([(left_x, size*0.25), (left_x, size*0.75)], fill=line_color, width=line_width)
-    # 오른쪽 페이지
     right_x = size * 0.65
-    draw.line([(right_x, size*0.25), (right_x, size*0.75)], fill=line_color, width=line_width)
-    # 상단 연결선
-    draw.line([(left_x, size*0.25), (right_x, size*0.25)], fill=line_color, width=line_width)
-    # 하단 연결선
-    draw.line([(left_x, size*0.75), (right_x, size*0.75)], fill=line_color, width=line_width)
-    # 책 밑부분
     bottom_y = size * 0.8
+    
+    # 그림자 효과 (먼저 그리기 - 가독성 향상)
+    shadow_color = (0, 0, 0, 120)  # 반투명 검은색 그림자
+    shadow_offset = max(1, size // 30)
+    shadow_width = line_width + 1
+    
+    # 그림자 그리기
+    draw.line([(left_x + shadow_offset, size*0.25 + shadow_offset), 
+                (left_x + shadow_offset, size*0.75 + shadow_offset)], 
+               fill=shadow_color, width=shadow_width)
+    draw.line([(right_x + shadow_offset, size*0.25 + shadow_offset), 
+                (right_x + shadow_offset, size*0.75 + shadow_offset)], 
+               fill=shadow_color, width=shadow_width)
+    draw.line([(left_x + shadow_offset, size*0.25 + shadow_offset), 
+                (right_x + shadow_offset, size*0.25 + shadow_offset)], 
+               fill=shadow_color, width=shadow_width)
+    draw.line([(left_x + shadow_offset, size*0.75 + shadow_offset), 
+                (right_x + shadow_offset, size*0.75 + shadow_offset)], 
+               fill=shadow_color, width=shadow_width)
+    draw.line([(size*0.3 + shadow_offset, bottom_y + shadow_offset), 
+                (size*0.7 + shadow_offset, bottom_y + shadow_offset)], 
+               fill=shadow_color, width=shadow_width)
+    
+    # 밝은 윤곽선 그리기 (그림자 위에)
+    draw.line([(left_x, size*0.25), (left_x, size*0.75)], fill=line_color, width=line_width)
+    draw.line([(right_x, size*0.25), (right_x, size*0.75)], fill=line_color, width=line_width)
+    draw.line([(left_x, size*0.25), (right_x, size*0.25)], fill=line_color, width=line_width)
+    draw.line([(left_x, size*0.75), (right_x, size*0.75)], fill=line_color, width=line_width)
     draw.line([(size*0.3, bottom_y), (size*0.7, bottom_y)], fill=line_color, width=line_width)
     
     return img
