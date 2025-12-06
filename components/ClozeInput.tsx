@@ -82,9 +82,9 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
       onFocus={() => onFocusRequest(state.id)}
       autoComplete="off"
       className={`
-        inline-flex mx-2 px-2 py-1 text-center outline-none border-b-4 rounded-lg
-        transition-all duration-200 align-baseline shadow-sm
-        text-[1.9rem] leading-none
+        inline-flex mx-3 px-3 py-2 text-center outline-none border-b-4 rounded-lg
+        transition-all duration-200 align-middle shadow-md
+        text-[1.9rem] leading-tight min-w-[4rem]
         disabled:opacity-100 disabled:cursor-not-allowed
         ${bgClass}
         ${statusClasses}
