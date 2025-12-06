@@ -1,5 +1,5 @@
 
-import { SectionData } from './types';
+import { SectionData, PolicyDetailData } from './types';
 
 export const INTRO_CONTENT = [
   "1. [비전]",
@@ -116,6 +116,146 @@ export const INTERVIEW_SECTIONS: SectionData[] = [
       "결론:",
       "",
       "[이처럼 해당 방안을 통해 00를 이루겠습니다]."
+    ]
+  }
+];
+
+export const POLICY_SECTIONS: SectionData[] = [
+  {
+    id: 'policy2026',
+    title: '2026 시책',
+    content: [
+      "[2026 시책 내용을 여기에 입력하세요]"
+    ]
+  }
+];
+
+export const POLICY_DETAILS: PolicyDetailData[] = [
+  {
+    id: 'warm-heart',
+    title: '1. 따뜻한 마음을 키워 올바른 인성을 기르겠습니다.',
+    hierarchy: [
+      {
+        title: '인성·인문·예술교육',
+        children: [
+          {
+            title: '인성·마음교육',
+            children: [
+              { title: '[인성중심] 학교교육과정 운영' },
+              { title: '[마음학기제] 및 [마음챙김] 프로그램' },
+              { title: '인성/마음교육 [지도역량] 강화 연수' }
+            ]
+          },
+          {
+            title: '독서인문교육',
+            children: [
+              { title: '[융합적] 독서 및 글쓰기 교육([수품책])' },
+              { title: '[독서토론] 동아리 활성화' },
+              { title: '대구 학생 [책축제] 및 [인문학Eday]' }
+            ]
+          },
+          {
+            title: '예술교육',
+            children: [
+              { title: '[1학생 1예술활동] 및 [창작터] 운영' },
+              { title: '학생 [예술활동] 및 [동아리] 지원' },
+              { title: '[지역 연계] 예술교육 활성화' }
+            ]
+          }
+        ]
+      },
+      {
+        title: '생활·체험교육',
+        children: [
+          {
+            title: '관계존중교육',
+            children: [
+              { title: '[어울림] 프로그램 및 [학생언어문화]개선' },
+              { title: '[사제존중] 행복시간 운영' },
+              { title: '[위(Wee)] 프로젝트 운영 및 [전문상담] 지원' }
+            ]
+          },
+          {
+            title: '회복중심 생활교육 및 상담',
+            children: [
+              { title: '[회복중심] 생활교육 실천 및 [사례 나눔]' },
+              { title: '[관계회복·갈등조정]지원단 운영' },
+              { title: '교육지원청/병원/가정형 [Wee 센터] 운영' }
+            ]
+          },
+          {
+            title: '대안교육 및 디지털 윤리',
+            children: [
+              { title: 'SW·AI [디지털 시민윤리] 교육 및 [리터러시]' },
+              { title: '[맞춤형] 대안교육([대안학교], [대안교실]) 운영' },
+              { title: '[학업중단 숙려제] 내실화 및 [문해교육]' }
+            ]
+          },
+          {
+            title: '자기주도 체험활동',
+            children: [
+              { title: '[수련원] 운영([팔공], [낙동], [해양])' },
+              { title: '[체육체험] 학습장 운영' },
+              { title: '[학생주도] 창의적 체험활동 지원([D-Art路])' }
+            ]
+          }
+        ]
+      },
+      {
+        title: '대구사랑·나라사랑교육',
+        children: [
+          {
+            title: '대구사랑 교육',
+            children: [
+              { title: '[지역화] 자료 활용 및 [체험학습]' },
+              { title: '[대구교육 박물관] 운영' }
+            ]
+          },
+          {
+            title: '나라사랑 및 역사 교육',
+            children: [
+              { title: '[국경일] 계기교육 및 [나라사랑] 체험교육' },
+              { title: '[안보·통일] 교육 프로그램 운영' },
+              { title: '[지역 연계] 역사 체험 및 [독도] 교육 지원' }
+            ]
+          },
+          {
+            title: '민주시민 교육',
+            children: [
+              { title: '[민주시민교육센터] 운영' },
+              { title: '[선도·실천학교] 및 [교원 연수] 운영' }
+            ]
+          }
+        ]
+      },
+      {
+        title: '글로벌 교육',
+        children: [
+          {
+            title: '기후환경·생태전환교육',
+            children: [
+              { title: '교육과정 연계 [환경교육] 및 [실천 과제]' },
+              { title: '[생태나침반] 학교 및 [실천학교] 운영' },
+              { title: '[탄소중립학생위원회] 및 [교원 역량] 강화' }
+            ]
+          },
+          {
+            title: '글로벌 경제금융교육',
+            children: [
+              { title: '학생 [경제금융 이해도] 진단 및 [자료 개발]' },
+              { title: '[경제금융교육] 선도학교 및 [캠프] 운영' }
+            ]
+          },
+          {
+            title: '세계시민교육',
+            children: [
+              { title: '[대구세계시민교육센터] 운영' },
+              { title: '[실용외국어] 교육 및 [AI 활용] 영어 학습' },
+              { title: '교육국제화 특구([세계동행학교]) 운영' }
+            ]
+          }
+        ]
+      }
     ]
   }
 ];
