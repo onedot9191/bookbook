@@ -656,33 +656,77 @@ const App: React.FC = () => {
     let lastIndex = 0;
     let match;
     let matchCount = matchOffset;
-
-    while ((match = regex.exec(text)) !== null) {
+    const matches: RegExpExecArray[] = [];
+    
+    // 먼저 모든 매치를 수집 (정규식의 lastIndex를 초기화하기 위해)
+    const regexForCollection = /\[(.*?)\]/g;
+    let tempMatch;
+    while ((tempMatch = regexForCollection.exec(text)) !== null) {
+      matches.push({...tempMatch});
+    }
+    
+    // 수집한 매치들을 처리
+    matches.forEach((match, matchIdx) => {
       if (match.index > lastIndex) {
         parts.push(text.substring(lastIndex, match.index));
       }
 
       const id = isInterview ? `interview-${secIdx}-${lineIdx}-${matchCount}` : `${secIdx}-${lineIdx}-${matchCount}`;
-      const state = inputStates[id];
+      let state = inputStates[id];
+      
+      // Fallback: state를 찾지 못한 경우, 같은 라인에서 다른 matchCount로 찾아보기
+      if (!state && isInterview) {
+        // 같은 라인에서 matchCount를 0부터 시작해서 찾아보기
+        for (let i = 0; i < 10; i++) { // 최대 10개까지 시도
+          const fallbackId = `interview-${secIdx}-${lineIdx}-${i}`;
+          const fallbackState = inputStates[fallbackId];
+          if (fallbackState) {
+            // answer가 일치하는지 확인
+            const currentAnswer = match[1].trim();
+            if (fallbackState.answer === currentAnswer) {
+              state = fallbackState;
+              break;
+            }
+          }
+        }
+      }
 
       if (state) {
         parts.push(
           <ClozeInput
-            key={id}
+            key={`${id}-${matchIdx}`}
             state={state}
-            isReviewNeeded={wrongHistory.has(id)}
+            isReviewNeeded={wrongHistory.has(state.id)}
             onUpdate={updateInput}
             onSubmit={handleValidate}
             onFocusRequest={() => {}} 
           />
         );
       } else {
-          parts.push(<span key={id} className="text-muted-foreground">...</span>);
+          // state를 찾지 못한 경우, 빈 입력 필드 생성
+          const fallbackState: InputState = {
+            id,
+            value: '',
+            status: 'idle',
+            attempts: 0,
+            disabled: false,
+            answer: match[1].trim(),
+          };
+          parts.push(
+            <ClozeInput
+              key={`${id}-${matchIdx}`}
+              state={fallbackState}
+              isReviewNeeded={false}
+              onUpdate={updateInput}
+              onSubmit={handleValidate}
+              onFocusRequest={() => {}} 
+            />
+          );
       }
 
-      lastIndex = regex.lastIndex;
+      lastIndex = match.index + match[0].length;
       matchCount++;
-    }
+    });
 
     if (lastIndex < text.length) {
       parts.push(text.substring(lastIndex));
@@ -946,7 +990,7 @@ const App: React.FC = () => {
                         }}
                         className="w-full max-w-md group relative flex items-center justify-between px-8 py-5 bg-secondary hover:bg-secondary/90 text-secondary-foreground text-xl font-bold rounded-2xl transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-secondary/25 active:scale-95"
                     >
-                        <span className="flex-1 text-center">심층면접 서결론</span>
+                        <span className="flex-1 text-center">심층면접 답안틀</span>
                         <div className="bg-white/20 rounded-full p-1 group-hover:translate-x-1 transition-transform">
                             <ChevronRight size={24} />
                         </div>
@@ -1020,115 +1064,108 @@ const App: React.FC = () => {
   if (showInterview) {
     const renderInterviewContentBlocks = () => {
       const section = INTERVIEW_SECTIONS[activeTab];
-      const commonTextClass = "text-[1.9rem] leading-[3.5rem] text-card-foreground font-medium break-keep tracking-wide";
+      const commonTextClass = "text-[1.9rem] leading-[4rem] text-card-foreground font-medium break-keep tracking-wide";
 
-      // 구조화된 데이터로 변환
+      // 구조화된 데이터로 변환 (각 라인에 원본 인덱스 포함)
       const blocks: Array<{
-        type: 'header' | 'intro' | 'conclusion';
-        header?: string; // "1. 구상형", "2. 즉답형"
-        content: string;
-        lineIdx: number;
+        type: 'intro' | 'body' | 'conclusion';
+        content: Array<{ text: string; originalIdx: number }>;
       }> = [];
 
-      let currentHeader: string | null = null;
+      let currentType: 'intro' | 'body' | 'conclusion' | null = null;
+      let currentContent: Array<{ text: string; originalIdx: number }> = [];
       
       section.content.forEach((line, idx) => {
-        if (!line.trim()) return;
-        
-        // 헤더 감지
-        if (/^\d+\.\s/.test(line.trim())) {
-          currentHeader = line.trim();
-          blocks.push({
-            type: 'header',
-            header: currentHeader,
-            content: '',
-            lineIdx: idx
-          });
-        }
-        // 서론/결론 감지
-        else if (line.trim().startsWith('서론:') || line.trim().startsWith('결론:')) {
-          const isConclusion = line.trim().startsWith('결론:');
-          // "서론:" 또는 "결론:" 부분을 제거하고 본문만 추출
-          const content = line.substring(line.indexOf(':') + 1).trim();
-          blocks.push({
-            type: isConclusion ? 'conclusion' : 'intro',
-            header: currentHeader || undefined,
-            content,
-            lineIdx: idx
-          });
+        // 섹션 헤더 감지
+        if (line.trim() === '서론:') {
+          if (currentType && currentContent.length > 0) {
+            blocks.push({
+              type: currentType,
+              content: currentContent
+            });
+          }
+          currentType = 'intro';
+          currentContent = [];
+        } else if (line.trim() === '본론:') {
+          if (currentType && currentContent.length > 0) {
+            blocks.push({
+              type: currentType,
+              content: currentContent
+            });
+          }
+          currentType = 'body';
+          currentContent = [];
+        } else if (line.trim() === '결론:') {
+          if (currentType && currentContent.length > 0) {
+            blocks.push({
+              type: currentType,
+              content: currentContent
+            });
+          }
+          currentType = 'conclusion';
+          currentContent = [];
+        } else if (currentType && line.trim()) {
+          // 빈 줄이 아닌 경우에만 추가 (원본 인덱스와 함께)
+          currentContent.push({ text: line, originalIdx: idx });
         }
       });
 
-      // 헤더별로 그룹화하여 렌더링
-      const groupedBlocks: { [key: string]: Array<typeof blocks[0]> } = {};
-      blocks.forEach(block => {
-        const key = block.header || 'default';
-        if (!groupedBlocks[key]) {
-          groupedBlocks[key] = [];
+      // 마지막 블록 추가
+      if (currentType && currentContent.length > 0) {
+        blocks.push({
+          type: currentType,
+          content: currentContent
+        });
+      }
+
+      // 각 라인에 대한 matchOffset 계산 (전체 섹션 기준)
+      // matchOffset은 해당 라인 이전까지의 모든 빈칸 개수
+      let globalMatchOffset = 0;
+      const lineOffsets: Map<number, number> = new Map();
+      
+      section.content.forEach((line, idx) => {
+        // 현재 라인 이전까지의 빈칸 개수를 저장
+        lineOffsets.set(idx, globalMatchOffset);
+        // 현재 라인의 빈칸 개수를 계산하여 다음 라인에 반영
+        const matches = line.match(/\[(.*?)\]/g);
+        if (matches) {
+          globalMatchOffset += matches.length;
         }
-        groupedBlocks[key].push(block);
       });
 
       return (
-        <div className="space-y-16">
-          {Object.entries(groupedBlocks).map(([headerKey, groupBlocks], groupIdx) => {
-            const headerBlock = groupBlocks.find(b => b.type === 'header');
-            const introBlock = groupBlocks.find(b => b.type === 'intro');
-            const conclusionBlock = groupBlocks.find(b => b.type === 'conclusion');
+        <div className="space-y-10">
+          {blocks.map((block, blockIdx) => {
+            const titleMap = {
+              intro: '서론',
+              body: '본론',
+              conclusion: '결론'
+            };
+
+            const colorMap = {
+              intro: 'text-muted-foreground',
+              body: 'text-primary',
+              conclusion: 'text-muted-foreground'
+            };
 
             return (
-              <div key={groupIdx} className="space-y-10">
-                {/* 헤더 (구상형/즉답형) */}
-                {headerBlock && headerBlock.header && (
-                  <div className="flex items-center gap-4">
-                    {(() => {
-                      const match = headerBlock.header.match(/^(\d+)\.\s*(.+)/);
-                      const number = match ? match[1] : null;
-                      const title = match ? match[2] : headerBlock.header;
-                      return (
-                        <>
-                          {number && (
-                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20 text-primary text-lg font-bold">
-                              {number}
-                            </div>
-                          )}
-                          <h3 className="text-[2.2rem] font-bold text-primary">
-                            {title}
-                          </h3>
-                        </>
-                      );
-                    })()}
-                  </div>
-                )}
-
-                <div className="space-y-8">
-                  {/* 서론 */}
-                  {introBlock && (
-                    <div className="bg-card p-10 rounded-2xl shadow-sm">
-                      <div className="mb-6">
-                        <span className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
-                          서론
-                        </span>
+              <div key={blockIdx} className="bg-card p-10 rounded-2xl shadow-sm">
+                <div className="mb-8 pb-4 border-b-2 border-primary/30">
+                  <h2 className={`text-3xl md:text-4xl font-bold ${colorMap[block.type]} tracking-tight`}>
+                    {titleMap[block.type]}
+                  </h2>
+                </div>
+                <div className="space-y-6">
+                  {block.content.map((lineData, lineIdx) => {
+                    const actualLineIdx = lineData.originalIdx;
+                    const matchOffset = lineOffsets.get(actualLineIdx) ?? 0;
+                    
+                    return (
+                      <div key={lineIdx} className={`${commonTextClass} py-2`}>
+                        {renderLine(lineData.text, activeTab, actualLineIdx, matchOffset, true)}
                       </div>
-                      <div className={commonTextClass}>
-                        {renderLine(introBlock.content, activeTab, introBlock.lineIdx, 0, true)}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 결론 */}
-                  {conclusionBlock && (
-                    <div className="bg-card p-10 rounded-2xl shadow-sm">
-                      <div className="mb-6">
-                        <span className="text-sm font-bold text-primary uppercase tracking-wider">
-                          결론
-                        </span>
-                      </div>
-                      <div className={commonTextClass}>
-                        {renderLine(conclusionBlock.content, activeTab, conclusionBlock.lineIdx, 0, true)}
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -1149,7 +1186,7 @@ const App: React.FC = () => {
             <div className="bg-primary p-2 rounded-lg">
               <BookOpen className="w-6 h-6 text-primary-foreground" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">심층면접 서결론</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">심층면접 답안틀</h1>
           </button>
           <div className="flex items-center gap-3 sm:gap-4">
             {wrongHistory.size > 0 && (
@@ -1172,32 +1209,6 @@ const App: React.FC = () => {
         {/* Main Content */}
         <main className="w-full max-w-4xl p-6 md:p-12 flex-1">
           
-          {/* Tabs */}
-          <div className="flex flex-wrap gap-3 mb-12 justify-center">
-            {INTERVIEW_SECTIONS.map((section, idx) => {
-              const isCurrent = idx === activeTab;
-              const sectionIds = Object.keys(inputStates).filter(k => k.startsWith(`interview-${idx}-`));
-              const isDone = sectionIds.length > 0 && sectionIds.every(id => inputStates[id].status === 'correct' || inputStates[id].status === 'wrong-2');
-
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => setActiveTab(idx)}
-                  className={`
-                    px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 border
-                    ${isCurrent 
-                      ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105' 
-                      : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'}
-                    ${isDone && !isCurrent ? 'border-primary/50 text-primary bg-primary/10' : ''}
-                  `}
-                >
-                  {isDone && <CheckCircle size={14} />}
-                  {section.title}
-                </button>
-              );
-            })}
-          </div>
-
           {/* Dynamic Content Block Render */}
           <div id={`tab-content-${activeTab}`} className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
             {renderInterviewContentBlocks()}
