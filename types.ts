@@ -18,3 +18,15 @@ export interface SectionData {
   title: string;
   content: string[];
 }
+
+// 계층 구조 데이터 타입
+export interface HierarchyItem {
+  title: string;
+  children?: HierarchyItem[];
+}
+
+export interface PolicyDetailData {
+  id: string;
+  title: string;
+  hierarchy: HierarchyItem[];
+}
