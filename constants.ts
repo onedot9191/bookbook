@@ -139,7 +139,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
         title: '인성·인문·예술교육',
         children: [
           {
-            title: '인성·마음교육',
+            title: '[인성·마음교육]',
             children: [
               { title: '[1교 1브랜드]' },
               { title: '[마음학기제]([초5])' },
@@ -154,7 +154,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
             ]
           },
           {
-            title: '독서인문교육',
+            title: '[독서인문교육]',
             children: [
               { title: '[수품책]' },
               { title: '[대구 학생 책축제]' },
@@ -163,7 +163,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
             ]
           },
           {
-            title: '예술교육',
+            title: '[예술교육]',
             children: [
               { title: '[1학생 1예술활동]' },
               { title: '[대구학생예술창작터]' },
@@ -330,7 +330,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
             ]
           },
           {
-            title: '국제 바칼로레아(IB) 프로그램',
+            title: '[국제 바칼로레아(IB)] 프로그램',
             children: [
               { title: '[대구미래학교] 운영 및 [컨설팅 지원체제] 구축' },
               { title: '[IB 프로그램] 운영 학교 확대 및 [DP 도입] 연계' },
@@ -338,7 +338,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
             ]
           },
           {
-            title: '대구미래학교',
+            title: '[대구미래학교]',
             children: [
               { title: '[고교학점제] 운영 및 [공동교육과정] 지원' },
               { title: '[학교브랜드 특화사업] 운영 지원' },
@@ -353,26 +353,39 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
           {
             title: '수업 중심 학교문화',
             children: [
-              { title: '[학생주도수업] 운영 기반 구축 및 [거점센터] 운영' },
-              { title: '[융합교육(STEAM)] 내실화 및 문화 확산' },
-              { title: '학생 중심 [STEAM 활동] 및 [페스티벌]' }
+              { title: '[교수평기 설계 및 성찰 주간]' },
+              { title: '[수업 몰입 여건 조성]' }
             ]
           },
           {
             title: '탐구중심 학생주도수업',
             children: [
-              { title: '교원 [전문학습공동체] 운영 및 연수' },
-              { title: '[탐구중심 학생주도수업] 선도학교 및 [대구탐구학교] 운영' },
-              { title: '대구 [글로벌 원격협력학습] 운영 지원' }
+              {
+                title: '기반 조성',
+                children: [
+                  { title: '[교원 연수 및 컨설팅] 실시' },
+                  { title: '[교원 전문학습공동체] 운영' },
+                  { title: '[교실 동행 멘토링] 운영' },
+                  { title: '[D-블렌디드 수업] 안착' }
+                ]
+              },
+              {
+                title: '활성화',
+                children: [
+                  { title: '[탐구중심 학생주도수업] 선도학교 운영' },
+                  { title: '[질문하는 학교] 선도학교 운영' },
+                  { title: '[수석교사제] 활동 지원' }
+                ]
+              }
             ]
           },
           {
             title: '학생평가·기록',
             children: [
-              { title: '[교육과정 기반] 수업-평가 연계 강화' },
-              { title: '[AI 기반] 서·논·구술형 평가 [플랫폼] 구축' },
-              { title: '[성취평가제] 내실화 지원' },
-              { title: '[배움과 성장] 기반 학교생활기록부 기록 내실화' }
+              { title: '교육과정 기반 [수업]-[평가] 연계 강화' },
+              { title: '역량 성장을 지원하는 [서·논술형 평가] 운영' },
+              { title: '학생평가 선도학교 운영' },
+              { title: '학생의 배움과 성장 기반 [학교생활기록부] 기록' }
             ]
           }
         ]
@@ -381,20 +394,25 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
         title: '잠재력을 꽃피우는 맞춤형 교육',
         children: [
           {
-            title: '맞춤형 진로·진학교육',
+            title: '맞춤형 진로교육',
             children: [
-              { title: '[AI 진로탐색] 및 [진로내비게이션] 지원' },
-              { title: '[고입-대입 전문가] 양성 및 지원단 운영' },
-              { title: '학생/학부모 대상 [진로·진학 정보] 제공 확대' }
+              { title: '[AI 진로탐색 및 체험 프로그램]' },
+              {
+                title: '진로교육 자료 ([진로비타민]) 제공',
+                children: [
+                  { title: '[진로탄력성] 프로그램' },
+                  { title: '[현장체험학습 연계] 진로교육 프로그램' }
+                ]
+              },
+              { title: ' 신입생 학교 적응 프로그램 ([비포스쿨])' }
             ]
           },
           {
             title: '영재교육',
             children: [
-              { title: '미래형 직업교육 체제 구축([NCS 학점제])' },
-              { title: '[포용적 직업진로] 교육([다:행복한 프로그램])' },
-              { title: '직업계고 [취업역량] 강화([10조 기업 네트워크])' },
-              { title: '[맞춤형 영재교육] 및 [소외계층] 기회 확대' }
+              { title: '[영재학급 운영](초4~고1)' },
+              { title: '[영재교육원] 운영 cf.[영재캠프]' },
+              { title: '[영재키움프로젝트] 운영' }
             ]
           }
         ]
@@ -411,24 +429,28 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
           {
             title: '교육복지',
             children: [
-              { title: '[무상급식] 및 [무상교육]' },
-              { title: '[학생맞춤통합지원체계] 구축 및 [다품멘토링]' },
-              { title: '[저소득층] 교육급여 및 [교육비 지원]' }
+              { title: '학기 중 평일 중식 [무상급식]' },
+              { title: '[학생맞춤통합지원체계] 구축 및 [교육복지우선지원사업]' },
+              { title: '1:1 맞춤형 [다품멘토링] 운영' }
             ]
           },
           {
             title: '다문화교육',
             children: [
               { title: '교육공동체 [다문화 감수성] 함양 교육' },
-              { title: '이주배경 학생 [맞춤형 한국어교육] 확대' },
-              { title: '다문화교육 지원체제 강화([다-잇다 서비스])' }
+              { title: '상호문화이해 교육 cf.[이중언어교실], [이중언어 말하기 대회]' },
+              { title: '[한국어 예비과정] in [한국어교육센터]' },
+              { title: '[다다익선 글로벌 개척 프로젝트]' },
+              { title: '다문화교육 지원체제 강화([다-잇다 서비스])' },
+              { title: '[밀집학교] 중심 네트워크 활성화' }
             ]
           },
           {
-            title: '초등돌봄·교육(늘봄학교)',
+            title: '초등돌봄·교육([늘봄학교])',
             children: [
-              { title: '초등 [방과후학교] 지원 확대(초 1~3학년 [무상])' },
-              { title: '지역사회와 함께하는 [온동네 초등돌봄] 도입' }
+              { title: '정의: 기존 초등학교의 [방과후]와 [돌봄]을 통합·개선한 단일체제' },
+              { title: '무상 돌봄: [초1~2] / 방과후: [놀이·체험] 중심, [특기·적성] 개발 프로그램 등' },
+              { title: '확장: 지역사회와 함께하는 [온동네 초등돌봄] 도입' }
             ]
           }
         ]
@@ -443,7 +465,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
         title: '자기존중 건강교육',
         children: [
           {
-            title: '보건·건강증진',
+            title: '[보건]·[건강증진]교육',
             children: [
               { title: '학교급별 [보건교육] 및 [유해약물 예방] 교육' },
               { title: '학교 [감염병 예방] 및 [위기대응시스템] 구축' },
@@ -451,20 +473,26 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
             ]
           },
           {
-            title: '체육교육',
+            title: '[체육]교육',
             children: [
-              { title: '[건강체력] 기르기([7560+], [PAPS] 연계)' },
-              { title: '[스포츠클럽] 활성화 및 [스포츠강사] 배치' },
-              { title: '건강한 [식생활 교육] 및 [영양 캠프] 운영' },
-              { title: '질 높은 [학교급식] 제공 및 환경 개선' }
+              { title: '[신체활동 7560+] 및 [가족공감 1160] 실천' },
+              {
+                title: '[생존수영교육] 실시',
+                children: [
+                  { title: '실기: [3]·[4]학년' },
+                  { title: '이론: [1]·[2]·[5]·[6]학년' }
+                ]
+              },
+              { title: '[스포츠클럽] 활성화' },
+              { title: '[1인 1스포츠] 활성화 <br> cf.[다:체(體)로운 우리학교 365] 프로젝트 운영' }
             ]
           },
           {
-            title: '건강한 학교급식',
+            title: '건강한 [학교급식]',
             children: [
-              { title: '[건강한 학교급식] 운영 기반 구축 및 [거점센터] 운영' },
-              { title: '질 높은 [학교급식] 제공' },
-              { title: '[학교급식] 환경 개선' }
+              { title: '[건강한 식생활 및 영양교육](연2회)' },
+              { title: '[찾아가는 영양 체험관] 운영' },
+              { title: '[온가족이 함께하는 영양 캠프] 운영 ' }
             ]
           }
         ]
