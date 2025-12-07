@@ -19,15 +19,27 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const prevStatusRef = useRef<string>(state.status);
 
-  // Calculate width based on answer length and current value
-  // Use the longer of answer or current value to prevent clipping
-  // For Korean text, we need more space per character
-  const contentLength = Math.max(state.answer.length, state.value.length);
-  // Adjust multiplier based on length: longer text needs more space
-  const multiplier = contentLength >= 6 ? 1.4 : contentLength >= 4 ? 1.25 : 1.15;
+  // Calculate width based on answer length
+  // 한글 기준: 답안 길이에 따라 타이트하게 조정
+  const contentLength = Math.max(state.answer.length, state.value.length, 2);
+  
+  // 긴 답안일수록 더 타이트하게 (0.85~0.95 배수)
+  let multiplier;
+  if (contentLength >= 15) {
+    multiplier = 0.85; // 매우 긴 텍스트: 더 타이트
+  } else if (contentLength >= 10) {
+    multiplier = 0.9; // 긴 텍스트
+  } else if (contentLength >= 6) {
+    multiplier = 0.95; // 중간 텍스트
+  } else {
+    multiplier = 1.0; // 짧은 텍스트
+  }
+  
+  const calculatedWidth = contentLength * multiplier + 0.8;
+  
   const widthStyle = {
-    width: `calc(${contentLength * multiplier}ch + 3rem)`,
-    minWidth: '5rem',
+    width: `${calculatedWidth}em`,
+    minWidth: '3em',
   };
 
   // Effect: Handle focus and shake animation reset
@@ -87,9 +99,9 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
       onFocus={() => onFocusRequest(state.id)}
       autoComplete="off"
       className={`
-        inline-flex mx-3 px-3 py-2 text-center outline-none border-b-4 rounded-lg
-        transition-all duration-200 align-middle shadow-md
-        text-[1.9rem] leading-tight
+        inline-block mx-1 my-1 px-2 py-1 text-center outline-none border-b-4 rounded-lg
+        transition-all duration-200 align-baseline shadow-md
+        text-[1.6rem] leading-normal
         disabled:opacity-100 disabled:cursor-not-allowed
         ${bgClass}
         ${statusClasses}
