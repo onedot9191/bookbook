@@ -298,8 +298,11 @@ const App: React.FC = () => {
         }
       };
 
-      // 최상위 항목(탭)의 children만 파싱 (최상위 항목 자체는 탭 제목)
+      // 최상위 항목(탭)의 children 파싱 (Level 0 아이템도 포함)
       policyDetail.hierarchy.forEach((topItem, topIdx) => {
+        // Level 0 아이템 자체도 파싱
+        parseHierarchyItem(topItem, `top-${topIdx}`);
+        // Level 0 아이템의 children도 파싱
         if (topItem.children) {
           topItem.children.forEach((child, childIdx) => {
             parseHierarchyItem(child, `top-${topIdx}-${childIdx}`);
@@ -411,11 +414,16 @@ const App: React.FC = () => {
                 }
             };
             
-            // 최상위 항목(탭)의 children만 수집
-            if (selectedItem && selectedItem.children) {
-                selectedItem.children.forEach((child, childIdx) => {
-                    collectInputs(child, `top-${activePolicyTab}-${childIdx}`);
-                });
+            // 최상위 항목(탭) 자체와 children 모두 수집
+            if (selectedItem) {
+                // Level 0 아이템 자체도 수집
+                collectInputs(selectedItem, `top-${activePolicyTab}`);
+                // Level 0 아이템의 children도 수집
+                if (selectedItem.children) {
+                    selectedItem.children.forEach((child, childIdx) => {
+                        collectInputs(child, `top-${activePolicyTab}-${childIdx}`);
+                    });
+                }
             }
         }
     } else if (showPolicy) {
@@ -475,12 +483,16 @@ const App: React.FC = () => {
     const inputVal = currentState.value.trim();
     const correctVal = currentState.answer;
 
-    // 띄어쓰기 제거 후 비교 (허용답안 인정)
-    const normalizedInput = inputVal.replace(/\s+/g, '');
-    const normalizedAnswer = correctVal.replace(/\s+/g, '');
+    // 띄어쓰기 및 · 기호 제거 후 비교 (허용답안 인정)
+    const normalizedInput = inputVal.replace(/\s+/g, '').replace(/·/g, '');
+    const normalizedAnswer = correctVal.replace(/\s+/g, '').replace(/·/g, '');
 
-    // Logic A-1: Correct (띄어쓰기 무시 비교)
-    if (normalizedInput === normalizedAnswer) {
+    // 괄호와 그 안의 내용을 제거한 버전도 생성 (허용답안 인정)
+    const answerWithoutParentheses = correctVal.replace(/\([^)]*\)/g, '').trim();
+    const normalizedAnswerWithoutParentheses = answerWithoutParentheses.replace(/\s+/g, '').replace(/·/g, '');
+
+    // Logic A-1: Correct (띄어쓰기 및 · 기호 무시 비교 또는 괄호 제거 버전 비교)
+    if (normalizedInput === normalizedAnswer || normalizedInput === normalizedAnswerWithoutParentheses) {
       playSound('correct');
       // Remove from history
       if (wrongHistory.has(id)) {
@@ -1045,25 +1057,36 @@ const App: React.FC = () => {
   // --- Render Helpers ---
 
   const renderLine = (text: string, secIdx: number | string, lineIdx: number, matchOffset: number = 0, isInterview: boolean = false, isPolicy: boolean = false) => {
-    const parts: React.ReactNode[] = [];
-    const regex = /\[(.*?)\]/g;
-    let lastIndex = 0;
-    let match;
-    let matchCount = matchOffset;
-    const matches: RegExpExecArray[] = [];
+    // <br> 태그를 기준으로 텍스트를 분할
+    const lines = text.split(/<br\s*\/?>/i);
+    const allParts: React.ReactNode[] = [];
     
-    // 먼저 모든 매치를 수집 (정규식의 lastIndex를 초기화하기 위해)
-    const regexForCollection = /\[(.*?)\]/g;
-    let tempMatch;
-    while ((tempMatch = regexForCollection.exec(text)) !== null) {
-      matches.push({...tempMatch});
-    }
-    
-    // 수집한 매치들을 처리
-    matches.forEach((match, matchIdx) => {
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
+    let globalMatchCount = matchOffset;
+    lines.forEach((line, lineIndex) => {
+      if (lineIndex > 0) {
+        // 이전 줄 다음에 <br /> 요소 추가
+        allParts.push(<br key={`br-${lineIndex}`} />);
       }
+      
+      const parts: React.ReactNode[] = [];
+      const regex = /\[(.*?)\]/g;
+      let lastIndex = 0;
+      let match;
+      let matchCount = globalMatchCount;
+      const matches: RegExpExecArray[] = [];
+      
+      // 먼저 모든 매치를 수집 (정규식의 lastIndex를 초기화하기 위해)
+      const regexForCollection = /\[(.*?)\]/g;
+      let tempMatch;
+      while ((tempMatch = regexForCollection.exec(line)) !== null) {
+        matches.push({...tempMatch});
+      }
+      
+      // 수집한 매치들을 처리
+      matches.forEach((match, matchIdx) => {
+        if (match.index > lastIndex) {
+          parts.push(line.substring(lastIndex, match.index));
+        }
 
       // secIdx가 문자열이고 policy-detail로 시작하는 경우 그대로 사용, 아니면 일반 형식 사용
       const id = typeof secIdx === 'string' && secIdx.startsWith('policy-detail-') 
@@ -1129,15 +1152,19 @@ const App: React.FC = () => {
           );
       }
 
-      lastIndex = match.index + match[0].length;
-      matchCount++;
+        lastIndex = match.index + match[0].length;
+        matchCount++;
+        globalMatchCount++;
+      });
+
+      if (lastIndex < line.length) {
+        parts.push(line.substring(lastIndex));
+      }
+      
+      allParts.push(...parts);
     });
 
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
-    }
-
-    return parts;
+    return allParts;
   };
 
   const renderContentBlocks = () => {
@@ -1649,26 +1676,38 @@ const App: React.FC = () => {
     const renderHierarchy = (items: typeof selectedItem.children, level: number = 0, parentPath: string = `top-${activePolicyTab}`) => {
       if (!items) return null;
       
+      // 레벨별 색상 정의
+      const levelColors = [
+        { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary', accent: 'bg-primary' },
+        { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-400', accent: 'bg-blue-500' },
+        { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', accent: 'bg-emerald-500' },
+        { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', accent: 'bg-amber-500' },
+      ];
+      const colors = levelColors[Math.min(level, levelColors.length - 1)];
+      
       return (
-        <div className={`space-y-6 ${level > 0 ? 'ml-4 md:ml-6' : ''}`}>
+        <div className={`${level === 0 ? 'space-y-6' : 'space-y-3'}`}>
           {items.map((item, idx) => {
-            // 경로 계산: parseHierarchyItem과 동일하게 ${parentPath}-${idx}
             const itemPath = `${parentPath}-${idx}`;
+            const hasChildren = item.children && item.children.length > 0;
             
-            // Level 0 (파트 레벨): 카드 형태로 시각적 구분
+            // Level 0: 대분류 카드
             if (level === 0) {
-              // 제목에서 빈칸 부분 제거하여 순수 제목만 추출
-              const titleText = item.title.replace(/\[.*?\]/g, '').trim();
-              
               return (
-                <div key={idx} className="mb-8">
-                  <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-2 border-primary/30 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:border-primary/50 transition-all">
-                    <div className="text-xl md:text-2xl font-bold text-primary mb-4 pb-3 border-b-2 border-primary/40 flex items-center gap-3">
-                      <div className="w-1 h-8 bg-primary rounded-full"></div>
-                      <span>{titleText}</span>
+                <div key={idx} className="group">
+                  <div className={`${colors.bg} border-2 ${colors.border} rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all`}>
+                    {/* 헤더 */}
+                    <div className={`${colors.bg} px-6 py-4 flex items-center gap-4`}>
+                      <div className={`${colors.accent} text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg shrink-0`}>
+                        {idx + 1}
+                      </div>
+                      <div className={`text-xl md:text-2xl font-bold ${colors.text} flex-1 leading-[2]`}>
+                        {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, true)}
+                      </div>
                     </div>
-                    {item.children && item.children.length > 0 && (
-                      <div className="mt-6 pl-4 space-y-4">
+                    {/* 콘텐츠 */}
+                    {hasChildren && (
+                      <div className="bg-card/50 p-6 border-t border-border/50">
                         {renderHierarchy(item.children, level + 1, itemPath)}
                       </div>
                     )}
@@ -1677,22 +1716,67 @@ const App: React.FC = () => {
               );
             }
             
-            // Level 1 이상: 기존 스타일 유지
-            return (
-              <div key={idx} className={`${level === 1 ? 'mb-4' : 'mb-3'}`}>
-                <div className={`
-                  ${level === 1
-                    ? 'text-lg md:text-xl font-medium text-foreground mb-2 pl-4 border-l-2 border-primary/20'
-                    : 'text-base md:text-lg text-muted-foreground pl-6'
-                  }
-                `}>
-                  {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, true)}
-                </div>
-                {item.children && item.children.length > 0 && (
-                  <div className={`mt-3 ${level === 1 ? 'pl-4' : 'pl-6'}`}>
-                    {renderHierarchy(item.children, level + 1, itemPath)}
+            // Level 1: 중분류 카드
+            if (level === 1) {
+              return (
+                <div key={idx} className="group">
+                  <div className={`${colors.bg} border ${colors.border} rounded-xl overflow-hidden`}>
+                    {/* 헤더 */}
+                    <div className="px-5 py-3 flex items-center gap-3">
+                      <div className={`${colors.accent} w-2 h-6 rounded-full shrink-0`}></div>
+                      <div className={`text-lg md:text-xl font-semibold ${colors.text} flex-1 leading-[2]`}>
+                        {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, true)}
+                      </div>
+                    </div>
+                    {/* 콘텐츠 */}
+                    {hasChildren && (
+                      <div className="bg-card/30 px-5 pb-4 pt-2">
+                        {renderHierarchy(item.children, level + 1, itemPath)}
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+              );
+            }
+            
+            // Level 2: 세부 항목 (bullet point)
+            if (level === 2) {
+              return (
+                <div key={idx} className="relative pl-6">
+                  {/* 연결선 */}
+                  <div className={`absolute left-2 top-0 bottom-0 w-px ${colors.border} border-l border-dashed`}></div>
+                  <div className={`absolute left-[5px] top-3 w-2 h-2 rounded-full ${colors.accent}`}></div>
+                  
+                  <div className="py-1">
+                    <div className={`text-base md:text-lg text-foreground leading-[2]`}>
+                      {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, true)}
+                    </div>
+                    {hasChildren && (
+                      <div className="mt-2 ml-2">
+                        {renderHierarchy(item.children, level + 1, itemPath)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+            
+            // Level 3+: 하위 항목 (작은 bullet)
+            return (
+              <div key={idx} className="relative pl-5">
+                {/* 작은 bullet */}
+                <div className={`absolute left-1 top-3 w-1.5 h-1.5 rounded-full ${colors.accent}/60`}></div>
+                
+                <div className="py-0.5">
+                  <div className="text-sm md:text-base text-muted-foreground leading-[2]">
+                    {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, true)}
+                  </div>
+                  {hasChildren && (
+                    <div className="mt-1 ml-2">
+                      {renderHierarchy(item.children, level + 1, itemPath)}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
