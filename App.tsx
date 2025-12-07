@@ -619,6 +619,109 @@ const App: React.FC = () => {
     }
   };
 
+  // Helper function to collect input IDs for a section (matches rendering logic)
+  const collectSectionInputIds = (section: typeof SECTIONS[0], tabIdx: number): string[] => {
+    const inputIds: string[] = [];
+    
+    // 'principles' 섹션의 특수 처리
+    if (section.id === 'principles') {
+      const parts: Array<{title: string, titleLineIdx: number, definition: string, meaning: string, defLineIdx: number, meanLineIdx: number}> = [];
+      let currentPart: {title: string, titleLineIdx: number, definition: string, meaning: string, defLineIdx: number, meanLineIdx: number} | null = null;
+
+      section.content.forEach((line, idx) => {
+        if (!line.trim()) return;
+        
+        if (line.startsWith('#')) {
+          if (currentPart) {
+            parts.push(currentPart);
+          }
+          currentPart = {
+            title: line.substring(1),
+            titleLineIdx: idx,
+            definition: '',
+            meaning: '',
+            defLineIdx: -1,
+            meanLineIdx: -1
+          };
+        } else if (currentPart && line.startsWith('정의:')) {
+          currentPart.definition = line.substring(3).trim();
+          currentPart.defLineIdx = idx;
+        } else if (currentPart && line.startsWith('의의:')) {
+          currentPart.meaning = line.substring(3).trim();
+          currentPart.meanLineIdx = idx;
+        }
+      });
+      
+      if (currentPart) {
+        parts.push(currentPart);
+      }
+
+      // 각 part의 ID 수집 (렌더링 로직과 동일)
+      parts.forEach((part) => {
+        // title의 매치들 (matchOffset = 0)
+        const titleMatches = (part.title.match(/\[(.*?)\]/g) || []);
+        titleMatches.forEach((_, matchIdx) => {
+          inputIds.push(`${tabIdx}-${part.titleLineIdx}-${matchIdx}`);
+        });
+
+        // definition의 매치들 (matchOffset = 0)
+        const defMatches = (part.definition.match(/\[(.*?)\]/g) || []);
+        defMatches.forEach((_, matchIdx) => {
+          inputIds.push(`${tabIdx}-${part.defLineIdx}-${matchIdx}`);
+        });
+
+        // meaning의 매치들 (matchOffset = defMatches.length)
+        const meanMatches = (part.meaning.match(/\[(.*?)\]/g) || []);
+        meanMatches.forEach((_, matchIdx) => {
+          inputIds.push(`${tabIdx}-${part.meanLineIdx}-${defMatches.length + matchIdx}`);
+        });
+      });
+    }
+    // 'competencies', 'goals' 섹션의 특수 처리
+    else if (section.id === 'competencies' || section.id === 'goals') {
+      section.content.forEach((line, idx) => {
+        const colonIndex = line.indexOf(':');
+        if (colonIndex === -1) {
+          // 콜론이 없으면 일반 방식
+          const regex = /\[(.*?)\]/g;
+          let matchCount = 0;
+          while (regex.exec(line) !== null) {
+            inputIds.push(`${tabIdx}-${idx}-${matchCount}`);
+            matchCount++;
+          }
+        } else {
+          const keyword = line.substring(0, colonIndex).trim();
+          const description = line.substring(colonIndex + 1).trim();
+          
+          // keyword의 매치들 (matchOffset = 0)
+          const keywordMatches = (keyword.match(/\[(.*?)\]/g) || []);
+          keywordMatches.forEach((_, matchIdx) => {
+            inputIds.push(`${tabIdx}-${idx}-${matchIdx}`);
+          });
+
+          // description의 매치들 (matchOffset = keywordMatches.length)
+          const descMatches = (description.match(/\[(.*?)\]/g) || []);
+          descMatches.forEach((_, matchIdx) => {
+            inputIds.push(`${tabIdx}-${idx}-${keywordMatches.length + matchIdx}`);
+          });
+        }
+      });
+    }
+    // 일반 섹션 처리
+    else {
+      section.content.forEach((line, lineIdx) => {
+        const regex = /\[(.*?)\]/g;
+        let matchCount = 0;
+        while (regex.exec(line) !== null) {
+          inputIds.push(`${tabIdx}-${lineIdx}-${matchCount}`);
+          matchCount++;
+        }
+      });
+    }
+    
+    return inputIds;
+  };
+
   // --- Logic B: Auto-Tab / Intro Transition ---
   useEffect(() => {
     if (isTransitioningRef.current || isLandingPage) return;
@@ -964,16 +1067,8 @@ const App: React.FC = () => {
     const currentSection = SECTIONS[activeTab];
     if (!currentSection) return;
 
-    // Gather IDs for current tab
-    const tabInputIds: string[] = [];
-    currentSection.content.forEach((line, lineIdx) => {
-      const regex = /\[(.*?)\]/g;
-      let matchCount = 0;
-      while (regex.exec(line) !== null) {
-        tabInputIds.push(`${activeTab}-${lineIdx}-${matchCount}`);
-        matchCount++;
-      }
-    });
+    // Gather IDs for current tab - 렌더링 로직과 동일한 방식으로 수집
+    const tabInputIds = collectSectionInputIds(currentSection, activeTab);
 
     if (tabInputIds.length === 0) return;
 
@@ -1019,15 +1114,7 @@ const App: React.FC = () => {
           
           setTimeout(() => {
             const nextSection = SECTIONS[nextTab];
-            const nextTabIds: string[] = [];
-            nextSection.content.forEach((line, lineIdx) => {
-                const regex = /\[(.*?)\]/g;
-                let matchCount = 0;
-                while (regex.exec(line) !== null) {
-                    nextTabIds.push(`${nextTab}-${lineIdx}-${matchCount}`);
-                    matchCount++;
-                }
-            });
+            const nextTabIds = collectSectionInputIds(nextSection, nextTab);
 
             const firstAvailableId = nextTabIds.find(id => !inputStates[id]?.disabled);
             if (firstAvailableId) {
