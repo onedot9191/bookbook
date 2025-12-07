@@ -19,10 +19,15 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const prevStatusRef = useRef<string>(state.status);
 
-  // Calculate width based on answer length
-  // Width calculation remains constant based on answer length
+  // Calculate width based on answer length and current value
+  // Use the longer of answer or current value to prevent clipping
+  // For Korean text, we need more space per character
+  const contentLength = Math.max(state.answer.length, state.value.length);
+  // Adjust multiplier based on length: longer text needs more space
+  const multiplier = contentLength >= 6 ? 1.4 : contentLength >= 4 ? 1.25 : 1.15;
   const widthStyle = {
-    width: `calc(${state.answer.length * 1.15}ch + 3.5rem)`,
+    width: `calc(${contentLength * multiplier}ch + 3rem)`,
+    minWidth: '5rem',
   };
 
   // Effect: Handle focus and shake animation reset
@@ -84,7 +89,7 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
       className={`
         inline-flex mx-3 px-3 py-2 text-center outline-none border-b-4 rounded-lg
         transition-all duration-200 align-middle shadow-md
-        text-[1.9rem] leading-tight min-w-[4rem]
+        text-[1.9rem] leading-tight
         disabled:opacity-100 disabled:cursor-not-allowed
         ${bgClass}
         ${statusClasses}
