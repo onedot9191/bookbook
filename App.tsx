@@ -1477,11 +1477,12 @@ const App: React.FC = () => {
                                 onClick={() => {
                                     playSound('complete');
                                     setShowPolicyModal(false);
+                                    setSelectedPolicyDetail('learning-growth');
+                                    setActivePolicyTab(0);
                                     setIsLandingPage(false);
                                     setShowIntroQuiz(false);
                                     setShowInterview(false);
-                                    setShowPolicy(true);
-                                    setActiveTab(0);
+                                    setShowPolicy(false);
                                 }}
                                 className="w-full text-left p-6 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 hover:from-yellow-500/20 hover:to-amber-500/20 border border-yellow-500/20 hover:border-yellow-500/40 rounded-2xl transition-all hover:scale-[1.02] hover:shadow-lg group"
                             >
@@ -1500,11 +1501,12 @@ const App: React.FC = () => {
                                 onClick={() => {
                                     playSound('complete');
                                     setShowPolicyModal(false);
+                                    setSelectedPolicyDetail('wider-support');
+                                    setActivePolicyTab(0);
                                     setIsLandingPage(false);
                                     setShowIntroQuiz(false);
                                     setShowInterview(false);
-                                    setShowPolicy(true);
-                                    setActiveTab(0);
+                                    setShowPolicy(false);
                                 }}
                                 className="w-full text-left p-6 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 hover:from-blue-500/20 hover:to-cyan-500/20 border border-blue-500/20 hover:border-blue-500/40 rounded-2xl transition-all hover:scale-[1.02] hover:shadow-lg group"
                             >
@@ -1523,11 +1525,12 @@ const App: React.FC = () => {
                                 onClick={() => {
                                     playSound('complete');
                                     setShowPolicyModal(false);
+                                    setSelectedPolicyDetail('school-safety');
+                                    setActivePolicyTab(0);
                                     setIsLandingPage(false);
                                     setShowIntroQuiz(false);
                                     setShowInterview(false);
-                                    setShowPolicy(true);
-                                    setActiveTab(0);
+                                    setShowPolicy(false);
                                 }}
                                 className="w-full text-left p-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border border-emerald-500/20 hover:border-emerald-500/40 rounded-2xl transition-all hover:scale-[1.02] hover:shadow-lg group"
                             >
