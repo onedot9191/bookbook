@@ -57,11 +57,8 @@ const App: React.FC = () => {
       // Use requestAnimationFrame for immediate focus after DOM renders
       const focusTimer = requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-        // Find the first intro input field
-        const firstIntroInput = document.getElementById('input-intro-0-0');
-        if (firstIntroInput) {
-          focusAndScrollToInput(firstIntroInput);
-        }
+          // Focus the first enabled intro input (DOM 순서 기준)
+          focusFirstInputGlobally();
         });
       });
       
@@ -75,19 +72,9 @@ const App: React.FC = () => {
       // Use requestAnimationFrame for immediate focus after DOM renders
       const focusTimer = requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          // Find the first interview input field
-          const firstInterviewInput = document.getElementById('input-interview-0-0-0');
-          if (firstInterviewInput) {
-            focusAndScrollToInput(firstInterviewInput);
-          } else {
-            // Fallback: find any interview input in the first tab
-            const tabContentArea = document.getElementById('tab-content-0');
-            if (tabContentArea) {
-              const anyInput = tabContentArea.querySelector('input:not([disabled])') as HTMLInputElement;
-              if (anyInput) {
-                focusAndScrollToInput(anyInput);
-              }
-            }
+          // Focus first enabled input in the first interview tab (DOM 순서 기준)
+          if (!focusFirstInputInContainer('tab-content-0')) {
+            focusFirstInputGlobally();
           }
         });
       });
@@ -102,19 +89,9 @@ const App: React.FC = () => {
       // Use requestAnimationFrame for immediate focus after DOM renders
       const focusTimer = requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          // Find the first policy input field
-          const firstPolicyInput = document.getElementById('input-policy-0-0-0');
-          if (firstPolicyInput) {
-            focusAndScrollToInput(firstPolicyInput);
-          } else {
-            // Fallback: find any policy input in the first tab
-            const tabContentArea = document.getElementById('tab-content-0');
-            if (tabContentArea) {
-              const anyInput = tabContentArea.querySelector('input:not([disabled])') as HTMLInputElement;
-              if (anyInput) {
-                focusAndScrollToInput(anyInput);
-              }
-            }
+          // Focus first enabled input in the first policy tab (DOM 순서 기준)
+          if (!focusFirstInputInContainer('tab-content-0')) {
+            focusFirstInputGlobally();
           }
         });
       });
@@ -128,23 +105,10 @@ const App: React.FC = () => {
     if (selectedPolicyDetail) {
       const focusTimer = requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          // Find the first policy detail input field in the current tab
-          // 새 ID 형식: policy-detail-{policyIdx}-top-{tabIdx}-{childIdx}-{grandchildIdx}-...-{matchCount}
-          const policyDetailIdx = POLICY_DETAILS.findIndex(p => p.id === selectedPolicyDetail);
-          // 첫 번째 중분류(0)의 첫 번째 소분류(0)의 첫 번째 빈칸(0)
-          const firstInputId = `input-policy-detail-${policyDetailIdx}-top-${activePolicyTab}-0-0-0`;
-          const firstInput = document.getElementById(firstInputId);
-          if (firstInput) {
-            focusAndScrollToInput(firstInput);
-          } else {
-            // Fallback: find any input in the content area
-            const contentArea = document.querySelector('.animate-in');
-            if (contentArea) {
-              const anyInput = contentArea.querySelector('input:not([disabled])') as HTMLInputElement;
-              if (anyInput) {
-                focusAndScrollToInput(anyInput);
-              }
-            }
+          // Focus first enabled input in the current policy detail tab (DOM 순서 기준)
+          const containerId = `tab-content-${activePolicyTab}`;
+          if (!focusFirstInputInContainer(containerId)) {
+            focusFirstInputGlobally();
           }
         });
       });
@@ -362,6 +326,41 @@ const App: React.FC = () => {
         });
       });
     });
+  };
+
+  // Helper: Focus the first enabled input within a container (DOM order)
+  const focusFirstInputInContainer = (containerId: string) => {
+    const container = document.getElementById(containerId);
+    if (!container) return false;
+
+    const firstEnabled = container.querySelector('input:not([disabled])') as HTMLInputElement | null;
+    if (firstEnabled) {
+      focusAndScrollToInput(firstEnabled);
+      return true;
+    }
+
+    const anyInput = container.querySelector('input') as HTMLInputElement | null;
+    if (anyInput) {
+      focusAndScrollToInput(anyInput);
+      return true;
+    }
+
+    return false;
+  };
+
+  // Helper: Focus the first enabled input in the current view (fallback to document order)
+  const focusFirstInputGlobally = () => {
+    const firstEnabled = document.querySelector('input:not([disabled])') as HTMLInputElement | null;
+    if (firstEnabled) {
+      focusAndScrollToInput(firstEnabled);
+      return true;
+    }
+    const anyInput = document.querySelector('input') as HTMLInputElement | null;
+    if (anyInput) {
+      focusAndScrollToInput(anyInput);
+      return true;
+    }
+    return false;
   };
 
   const focusNextInput = (currentId: string) => {
@@ -722,6 +721,37 @@ const App: React.FC = () => {
     return inputIds;
   };
 
+// Helper function to collect all input IDs for a policy detail top-level tab (includes the top item itself)
+const collectPolicyDetailInputIds = (
+  policyDetail: (typeof POLICY_DETAILS)[number],
+  policyDetailIdx: number,
+  topIdx: number
+): string[] => {
+  const ids: string[] = [];
+
+  const traverse = (item: { title: string; children?: any[] }, path: string) => {
+    const matches = item.title.match(/\[(.*?)\]/g);
+    if (matches) {
+      matches.forEach((_, matchIdx) => {
+        ids.push(`policy-detail-${policyDetailIdx}-${path}-${matchIdx}`);
+      });
+    }
+
+    if (item.children) {
+      item.children.forEach((child, childIdx) => {
+        traverse(child, `${path}-${childIdx}`);
+      });
+    }
+  };
+
+  const topItem = policyDetail.hierarchy[topIdx];
+  if (topItem) {
+    traverse(topItem, `top-${topIdx}`);
+  }
+
+  return ids;
+};
+
   // --- Logic B: Auto-Tab / Intro Transition ---
   useEffect(() => {
     if (isTransitioningRef.current || isLandingPage) return;
@@ -758,29 +788,9 @@ const App: React.FC = () => {
         const currentTopItem = policyDetail.hierarchy[activePolicyTab];
         if (!currentTopItem || !currentTopItem.children) return;
 
-        // Gather IDs for current policy detail tab
-        const tabInputIds: string[] = [];
+        // Gather IDs for current policy detail tab (top item + 모든 하위)
         const policyDetailIdx = POLICY_DETAILS.findIndex(p => p.id === selectedPolicyDetail);
-        
-        const collectInputIds = (item: typeof currentTopItem.children[0], path: string) => {
-            const matches = item.title.match(/\[(.*?)\]/g);
-            if (matches) {
-                matches.forEach((_, matchIdx) => {
-                    tabInputIds.push(`policy-detail-${policyDetailIdx}-${path}-${matchIdx}`);
-                });
-            }
-            
-            if (item.children) {
-                item.children.forEach((child, childIdx) => {
-                    collectInputIds(child, `${path}-${childIdx}`);
-                });
-            }
-        };
-
-        // 최상위 항목(탭)의 children만 수집
-        currentTopItem.children.forEach((child, childIdx) => {
-            collectInputIds(child, `top-${activePolicyTab}-${childIdx}`);
-        });
+        const tabInputIds = collectPolicyDetailInputIds(policyDetail, policyDetailIdx, activePolicyTab);
 
         if (tabInputIds.length === 0) return;
 
@@ -824,41 +834,21 @@ const App: React.FC = () => {
               setActivePolicyTab(nextTab);
               
               setTimeout(() => {
-                const nextTopItem = policyDetail.hierarchy[nextTab];
-                if (nextTopItem && nextTopItem.children) {
-                    const nextTabIds: string[] = [];
-                    nextTopItem.children.forEach((child, childIdx) => {
-                        const collectNextIds = (item: typeof child, path: string) => {
-                            const matches = item.title.match(/\[(.*?)\]/g);
-                            if (matches) {
-                                matches.forEach((_, matchIdx) => {
-                                    nextTabIds.push(`policy-detail-${policyDetailIdx}-${path}-${matchIdx}`);
-                                });
-                            }
-                            
-                            if (item.children) {
-                                item.children.forEach((grandchild, grandchildIdx) => {
-                                    collectNextIds(grandchild, `${path}-${grandchildIdx}`);
-                                });
-                            }
-                        };
-                        collectNextIds(child, `top-${nextTab}-${childIdx}`);
-                    });
+                const nextTabIds = collectPolicyDetailInputIds(policyDetail, policyDetailIdx, nextTab);
 
-                    const firstAvailableId = nextTabIds.find(id => !inputStates[id]?.disabled);
-                    if (firstAvailableId) {
-                        const el = document.getElementById(`input-${firstAvailableId}`);
-                        if (el) {
-                            focusAndScrollToInput(el);
-                        }
-                    } else {
-                        // Fallback: find any input in the content area
-                        const contentArea = document.querySelector('.animate-in');
-                        if (contentArea) {
-                            const anyInput = contentArea.querySelector('input:not([disabled])') as HTMLInputElement;
-                            if (anyInput) {
-                                focusAndScrollToInput(anyInput);
-                            }
+                const firstAvailableId = nextTabIds.find(id => !inputStates[id]?.disabled);
+                if (firstAvailableId) {
+                    const el = document.getElementById(`input-${firstAvailableId}`);
+                    if (el) {
+                        focusAndScrollToInput(el);
+                    }
+                } else {
+                    // Fallback: find any input in the content area
+                    const contentArea = document.querySelector('.animate-in');
+                    if (contentArea) {
+                        const anyInput = contentArea.querySelector('input:not([disabled])') as HTMLInputElement;
+                        if (anyInput) {
+                            focusAndScrollToInput(anyInput);
                         }
                     }
                 }
