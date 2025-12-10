@@ -1663,6 +1663,8 @@ const App: React.FC = () => {
                                 onClick={() => {
                                     playSound('complete');
                                     setShowPolicyModal(false);
+                                    setSelectedPolicyDetail('education-community');
+                                    setActivePolicyTab(0);
                                     setIsLandingPage(false);
                                     setShowIntroQuiz(false);
                                     setShowInterview(false);
