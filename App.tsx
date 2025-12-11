@@ -483,14 +483,15 @@ const App: React.FC = () => {
     const correctVal = currentState.answer;
 
     // 띄어쓰기 및 · 기호 제거 후 비교 (허용답안 인정)
-    const normalizedInput = inputVal.replace(/\s+/g, '').replace(/·/g, '');
-    const normalizedAnswer = correctVal.replace(/\s+/g, '').replace(/·/g, '');
+    // 대소문자 구분하지 않음
+    const normalizedInput = inputVal.replace(/\s+/g, '').replace(/·/g, '').toLowerCase();
+    const normalizedAnswer = correctVal.replace(/\s+/g, '').replace(/·/g, '').toLowerCase();
 
     // 괄호와 그 안의 내용을 제거한 버전도 생성 (허용답안 인정)
     const answerWithoutParentheses = correctVal.replace(/\([^)]*\)/g, '').trim();
-    const normalizedAnswerWithoutParentheses = answerWithoutParentheses.replace(/\s+/g, '').replace(/·/g, '');
+    const normalizedAnswerWithoutParentheses = answerWithoutParentheses.replace(/\s+/g, '').replace(/·/g, '').toLowerCase();
 
-    // Logic A-1: Correct (띄어쓰기 및 · 기호 무시 비교 또는 괄호 제거 버전 비교)
+    // Logic A-1: Correct (띄어쓰기 및 · 기호 무시 비교 또는 괄호 제거 버전 비교, 대소문자 구분 안 함)
     if (normalizedInput === normalizedAnswer || normalizedInput === normalizedAnswerWithoutParentheses) {
       playSound('correct');
       // Remove from history
