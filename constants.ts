@@ -173,7 +173,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'intro-speaking',
             title: '말하기 상황',
             content: [
-              "[But I don't know] [how to speak (내용)]"
+              "[But I don't know] [how to speak in English]."
             ]
           }
         ]
