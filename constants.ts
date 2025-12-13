@@ -418,7 +418,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "Let's go together activity 3. This activity is Let's [game]",
       "",
-      "Last activity name is! [게임 이름] game.",
+      "Last activity name is! 게임 이름 game.",
       "",
       "Do you know this game? It's okay. I will explain the rule"
     ],
