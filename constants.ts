@@ -147,7 +147,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "",
       "[I will read a letter]. [Listen carefully].",
       "",
-      "[Hello, everyone]. [I have a problem]. [I made new American friend Ellen]."
+      "[Hello, everyone]. [I have a problem]. [I made new American friend Sally]."
     ],
     skillCategories: [
       {
