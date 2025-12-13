@@ -2552,10 +2552,16 @@ const collectPolicyDetailInputIds = (
                 }
               });
 
+              // 편지글 시작 인덱스 찾기 ("Hello, everyone" 포함된 라인부터)
+              const letterStartIndex = section.content.findIndex(line => 
+                line.includes("Hello, everyone") && line.includes("I have a problem")
+              );
+
               return (
                 <div className="space-y-6 mb-8">
                   {section.content.map((line, idx) => {
                     const matchOffset = lineOffsets.get(idx) ?? 0;
+                    const isLetterContent = letterStartIndex !== -1 && idx >= letterStartIndex;
                     
                     // 헤더 라인인 경우 스타일링 (콜론으로 끝나는 경우)
                     if (line.trim().endsWith(':') && !line.includes('[')) {
@@ -2571,6 +2577,21 @@ const collectPolicyDetailInputIds = (
                     // 빈 줄인 경우
                     if (!line.trim()) {
                       return <div key={idx} className="h-4" />;
+                    }
+                    
+                    // 편지글 내용인 경우 특별한 스타일 적용
+                    if (isLetterContent) {
+                      return (
+                        <div key={idx} className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 p-8 rounded-3xl border-2 border-pink-300 dark:border-pink-700 shadow-md">
+                          <div className="flex items-start gap-3 mb-2">
+                            <span className="text-2xl">✉️</span>
+                            <span className="text-sm font-semibold text-pink-700 dark:text-pink-300 uppercase tracking-wide">편지 내용</span>
+                          </div>
+                          <div className={commonTextClass}>
+                            {renderLine(line, activeTab, idx, matchOffset, false, true)}
+                          </div>
+                        </div>
+                      );
                     }
                     
                     return (
@@ -2680,18 +2701,27 @@ const collectPolicyDetailInputIds = (
                   // 활동 카드용 고유 secIdx 생성 (탭-스킬-활동)
                   const activitySecIdx = `${activeTab}-${effectiveSkillCategory.id}-${activity.id}`;
 
+                  // 도입 탭의 경우 편지글 스타일 적용
+                  const isIntroductionLetter = section.id === 'introduction';
+                  
                   return (
                     <div 
                       key={activity.id}
                       className={`
-                        ${colors.cardBg} ${colors.border} border-2 rounded-3xl p-6 shadow-md
+                        ${isIntroductionLetter 
+                          ? 'bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 border-2 border-pink-300 dark:border-pink-700' 
+                          : `${colors.cardBg} ${colors.border} border-2`} 
+                        rounded-3xl p-6 shadow-md
                         hover:shadow-lg transition-shadow duration-300
                       `}
                     >
                       {/* 활동 카드 헤더 */}
-                      <div className={`flex items-center gap-3 mb-4 pb-3 border-b ${colors.border}`}>
+                      <div className={`flex items-center gap-3 mb-4 pb-3 border-b ${isIntroductionLetter ? 'border-pink-300 dark:border-pink-700' : colors.border}`}>
+                        {isIntroductionLetter && (
+                          <span className="text-2xl">✉️</span>
+                        )}
                         <span className="text-2xl">{effectiveSkillCategory?.icon || colors.icon}</span>
-                        <h4 className={`text-xl font-bold ${colors.text}`}>
+                        <h4 className={`text-xl font-bold ${isIntroductionLetter ? 'text-pink-700 dark:text-pink-300' : colors.text}`}>
                           ●{activity.title}
                         </h4>
                       </div>
