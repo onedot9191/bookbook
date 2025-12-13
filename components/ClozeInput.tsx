@@ -7,6 +7,7 @@ interface ClozeInputProps {
   onUpdate: (id: string, value: string) => void;
   onSubmit: (id: string) => void;
   onFocusRequest: (id: string) => void;
+  isEnglishMode?: boolean; // 영어수업실연 답안틀용 좁은 너비
 }
 
 export const ClozeInput: React.FC<ClozeInputProps> = ({
@@ -15,31 +16,46 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
   onUpdate,
   onSubmit,
   onFocusRequest,
+  isEnglishMode = false,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const prevStatusRef = useRef<string>(state.status);
 
   // Calculate width based on answer length
-  // 한글 기준: 답안 길이에 따라 타이트하게 조정
   const contentLength = Math.max(state.answer.length, state.value.length, 2);
   
-  // 긴 답안일수록 더 타이트하게 (0.85~0.95 배수)
+  // 영어 모드: 영문 답안은 한글보다 좁게 (ch 단위 기준 더 타이트)
+  // 한글 모드: 기존 로직 유지
   let multiplier;
-  if (contentLength >= 15) {
-    multiplier = 0.85; // 매우 긴 텍스트: 더 타이트
-  } else if (contentLength >= 10) {
-    multiplier = 0.9; // 긴 텍스트
-  } else if (contentLength >= 6) {
-    multiplier = 0.95; // 중간 텍스트
+  if (isEnglishMode) {
+    // 영어: 한글보다 약간 좁은 너비 적용
+    if (contentLength >= 15) {
+      multiplier = 0.63;
+    } else if (contentLength >= 10) {
+      multiplier = 0.68;
+    } else if (contentLength >= 6) {
+      multiplier = 0.73;
+    } else {
+      multiplier = 0.78;
+    }
   } else {
-    multiplier = 1.0; // 짧은 텍스트
+    // 한글: 기존 로직
+    if (contentLength >= 15) {
+      multiplier = 0.85;
+    } else if (contentLength >= 10) {
+      multiplier = 0.9;
+    } else if (contentLength >= 6) {
+      multiplier = 0.95;
+    } else {
+      multiplier = 1.0;
+    }
   }
   
-  const calculatedWidth = contentLength * multiplier + 0.8;
+  const calculatedWidth = contentLength * multiplier + (isEnglishMode ? 0.58 : 0.8);
   
   const widthStyle = {
     width: `${calculatedWidth}em`,
-    minWidth: '3em',
+    minWidth: isEnglishMode ? '2.3em' : '3em',
   };
 
   // Effect: Handle focus and shake animation reset
