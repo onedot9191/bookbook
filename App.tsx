@@ -1957,7 +1957,7 @@ const collectPolicyDetailInputIds = (
                         }}
                         className="w-full max-w-md group relative flex items-center justify-between px-8 py-5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white text-xl font-bold rounded-2xl transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/25 active:scale-95"
                     >
-                        <span className="flex-1 text-center">영어수업실연 답안틀</span>
+                        <span className="flex-1 text-center">영어 답안틀</span>
                         <div className="bg-white/20 rounded-full p-1 group-hover:translate-x-1 transition-transform">
                             <ChevronRight size={24} />
                         </div>
@@ -2975,7 +2975,7 @@ const collectPolicyDetailInputIds = (
             <div className="bg-primary p-2 rounded-lg">
               <BookOpen className="w-6 h-6 text-primary-foreground" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">영어수업실연 답안틀</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">영어 답안틀</h1>
           </button>
           <div className="flex items-center gap-3 sm:gap-4">
             {wrongHistory.size > 0 && (
@@ -3000,17 +3000,61 @@ const collectPolicyDetailInputIds = (
           
           {/* Main Tabs (도입, Activity 1, Activity 2, Activity 3, 활동 마무리, 정리) */}
           {ENGLISH_DEMO_SECTIONS.length > 1 && (
-            <div className="flex flex-wrap gap-3 mb-12 justify-center">
+            <div className="flex flex-wrap gap-3 mb-12 justify-center items-center">
               {ENGLISH_DEMO_SECTIONS.map((sec, idx) => {
                 const isCurrent = idx === activeTab;
                 const sectionIds = Object.keys(inputStates).filter(k => k.startsWith(`english-demo-${idx}-`));
                 const isDone = sectionIds.length > 0 && sectionIds.every(id => inputStates[id].status === 'correct' || inputStates[id].status === 'wrong-2');
+                
+                // '정리' 탭인지 확인
+                const isConclusionTab = sec.id === 'conclusion';
+                // '면접' 탭인지 확인
+                const isInterviewTab = sec.id === 'interview';
+
+                // '면접' 탭은 별도로 렌더링하지 않음 (나중에 별도로 렌더링)
+                if (isInterviewTab) {
+                  return null;
+                }
+
+                return (
+                  <React.Fragment key={sec.id}>
+                    <button
+                      onClick={() => {
+                        setActiveTab(idx);
+                        setActiveSkillTab('listening'); // 탭 변경 시 서브탭 초기화
+                      }}
+                      className={`
+                        px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 border
+                        ${isCurrent 
+                          ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105' 
+                          : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'}
+                        ${isDone && !isCurrent ? 'border-primary/50 text-primary bg-primary/10' : ''}
+                      `}
+                    >
+                      {isDone && <CheckCircle size={14} />}
+                      {sec.title}
+                    </button>
+                    {/* '정리' 탭 오른쪽에 세로선 추가 */}
+                    {isConclusionTab && (
+                      <div className="h-8 w-px bg-border mx-2"></div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+              {/* '면접' 탭 별도 배치 */}
+              {(() => {
+                const interviewIdx = ENGLISH_DEMO_SECTIONS.findIndex(sec => sec.id === 'interview');
+                if (interviewIdx === -1) return null;
+                
+                const isCurrent = interviewIdx === activeTab;
+                const sectionIds = Object.keys(inputStates).filter(k => k.startsWith(`english-demo-${interviewIdx}-`));
+                const isDone = sectionIds.length > 0 && sectionIds.every(id => inputStates[id].status === 'correct' || inputStates[id].status === 'wrong-2');
+                const interviewSec = ENGLISH_DEMO_SECTIONS[interviewIdx];
 
                 return (
                   <button
-                    key={sec.id}
                     onClick={() => {
-                      setActiveTab(idx);
+                      setActiveTab(interviewIdx);
                       setActiveSkillTab('listening'); // 탭 변경 시 서브탭 초기화
                     }}
                     className={`
@@ -3022,10 +3066,10 @@ const collectPolicyDetailInputIds = (
                     `}
                   >
                     {isDone && <CheckCircle size={14} />}
-                    {sec.title}
+                    {interviewSec.title}
                   </button>
                 );
-              })}
+              })()}
             </div>
           )}
 
