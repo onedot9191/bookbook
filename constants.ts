@@ -208,10 +208,6 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       }
     ],
     closingContent: [
-      "[I will show you] [a video clip]. <br> [It's related to] [today's topic].",
-      "",
-      "[Guess what it is].",
-      "",
       "학습문제 확인:",
       "",
       "[What is 도비's problem]? 철수? [Yes, right].",
