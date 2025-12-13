@@ -19,6 +19,28 @@ export interface SectionData {
   content: string[];
 }
 
+// 영어수업실연 Activity 카드 데이터 구조
+export interface ActivityCard {
+  id: string;
+  title: string;
+  content: string[];
+}
+
+export interface SkillCategory {
+  id: 'listening' | 'speaking' | 'reading' | 'writing';
+  title: string;
+  icon: string;
+  activities: ActivityCard[];
+}
+
+export interface EnglishDemoSectionData {
+  id: string;
+  title: string;
+  content?: string[];  // 일반 섹션용 (상단 도입부)
+  skillCategories?: SkillCategory[];  // Activity 2, 3용
+  closingContent?: string[];  // 하단 마무리 콘텐츠 (도입의 학습문제 확인, Activity 3의 활동 마무리 등)
+}
+
 // 계층 구조 데이터 타입
 export interface HierarchyItem {
   title: string;
