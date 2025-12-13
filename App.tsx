@@ -1586,7 +1586,10 @@ const collectPolicyDetailInputIds = (
       // 수집한 매치들을 처리
       matches.forEach((match, matchIdx) => {
         if (match.index > lastIndex) {
-          parts.push(line.substring(lastIndex, match.index));
+          const textBeforeMatch = line.substring(lastIndex, match.index);
+          if (textBeforeMatch) {
+            parts.push(<span key={`text-${lineIndex}-${matchIdx}`}>{textBeforeMatch}</span>);
+          }
         }
 
       // secIdx가 문자열이고 policy-detail로 시작하는 경우 그대로 사용, 아니면 일반 형식 사용
@@ -1665,7 +1668,10 @@ const collectPolicyDetailInputIds = (
       });
 
       if (lastIndex < line.length) {
-        parts.push(line.substring(lastIndex));
+        const remainingText = line.substring(lastIndex);
+        if (remainingText) {
+          parts.push(<span key={`text-${lineIndex}-end`}>{remainingText}</span>);
+        }
       }
       
       allParts.push(...parts);
