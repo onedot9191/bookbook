@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { BookOpen, CheckCircle, ChevronRight, AlertTriangle, Lightbulb, Target, Shield, Users, Heart, Eye, RotateCcw, Home, List, X } from 'lucide-react';
-import { SECTIONS, INTRO_CONTENT, INTERVIEW_SECTIONS, POLICY_SECTIONS, POLICY_DETAILS } from './constants';
+import { SECTIONS, INTRO_CONTENT, INTERVIEW_SECTIONS, ENGLISH_DEMO_SECTIONS, POLICY_SECTIONS, POLICY_DETAILS } from './constants';
 import { InputState, STORAGE_KEY } from './types';
 import { ClozeInput } from './components/ClozeInput';
 import { playSound } from './sounds';
@@ -13,6 +13,7 @@ const App: React.FC = () => {
   const [isLandingPage, setIsLandingPage] = useState(true);
   const [showIntroQuiz, setShowIntroQuiz] = useState(false);
   const [showInterview, setShowInterview] = useState(false);
+  const [showEnglishDemo, setShowEnglishDemo] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
   const [showPolicyModal, setShowPolicyModal] = useState(false);
   const [selectedPolicyDetail, setSelectedPolicyDetail] = useState<string | null>(null);
@@ -21,6 +22,7 @@ const App: React.FC = () => {
   const [inputStates, setInputStates] = useState<Record<string, InputState>>({});
   const [wrongHistory, setWrongHistory] = useState<Set<string>>(new Set());
   const [showToast, setShowToast] = useState<{message: string, type: 'success' | 'info'} | null>(null);
+  const [activeSkillTab, setActiveSkillTab] = useState<string>('listening');
   
   // Ref to track if we are in a transition period to prevent double triggers
   const isTransitioningRef = useRef(false);
@@ -83,6 +85,23 @@ const App: React.FC = () => {
     }
   }, [showInterview]);
 
+  // Auto-focus first input when english demo starts
+  useEffect(() => {
+    if (showEnglishDemo) {
+      // Use requestAnimationFrame for immediate focus after DOM renders
+      const focusTimer = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Focus first enabled input in the first english demo tab (DOM 순서 기준)
+          if (!focusFirstInputInContainer('tab-content-0')) {
+            focusFirstInputGlobally();
+          }
+        });
+      });
+      
+      return () => cancelAnimationFrame(focusTimer);
+    }
+  }, [showEnglishDemo]);
+
   // Auto-focus first input when policy starts
   useEffect(() => {
     if (showPolicy) {
@@ -143,7 +162,7 @@ const App: React.FC = () => {
     });
     
     return () => cancelAnimationFrame(focusTimer);
-  }, [activeTab, isLandingPage, showIntroQuiz, showInterview, showPolicy]);
+  }, [activeTab, isLandingPage, showIntroQuiz, showInterview, showEnglishDemo, showPolicy]);
 
   // Helper: Parse text into tokens and initialize state
   const parseAndInitContent = useCallback(() => {
@@ -211,6 +230,81 @@ const App: React.FC = () => {
           matchCount++;
         }
       });
+    });
+
+    // Parse English Demo Sections
+    ENGLISH_DEMO_SECTIONS.forEach((section, secIdx) => {
+      // Parse normal content if exists
+      if (section.content) {
+        section.content.forEach((line, lineIdx) => {
+          const regex = /\[(.*?)\]/g;
+          let match;
+          let matchCount = 0;
+          while ((match = regex.exec(line)) !== null) {
+            const answer = match[1];
+            const id = `english-demo-${secIdx}-${lineIdx}-${matchCount}`;
+            initialStates[id] = {
+              id,
+              value: '',
+              status: 'idle',
+              attempts: 0,
+              disabled: false,
+              answer: answer.trim(),
+            };
+            matchCount++;
+          }
+        });
+      }
+      
+      // Parse skill categories if exists (Activity 2, Activity 3)
+      if (section.skillCategories) {
+        section.skillCategories.forEach((category) => {
+          category.activities.forEach((activity) => {
+            activity.content.forEach((line, lineIdx) => {
+              const regex = /\[(.*?)\]/g;
+              let match;
+              let matchCount = 0;
+              while ((match = regex.exec(line)) !== null) {
+                const answer = match[1];
+                // ID 형식: english-demo-{탭인덱스}-{스킬ID}-{활동ID}-{라인인덱스}-{매치카운트}
+                const id = `english-demo-${secIdx}-${category.id}-${activity.id}-${lineIdx}-${matchCount}`;
+                initialStates[id] = {
+                  id,
+                  value: '',
+                  status: 'idle',
+                  attempts: 0,
+                  disabled: false,
+                  answer: answer.trim(),
+                };
+                matchCount++;
+              }
+            });
+          });
+        });
+      }
+      
+      // Parse closingContent if exists (도입의 학습문제 확인, Activity 3의 활동 마무리)
+      if (section.closingContent) {
+        section.closingContent.forEach((line, lineIdx) => {
+          const regex = /\[(.*?)\]/g;
+          let match;
+          let matchCount = 0;
+          while ((match = regex.exec(line)) !== null) {
+            const answer = match[1];
+            // ID 형식: english-demo-{탭인덱스}-closing-{라인인덱스}-{매치카운트}
+            const id = `english-demo-${secIdx}-closing-${lineIdx}-${matchCount}`;
+            initialStates[id] = {
+              id,
+              value: '',
+              status: 'idle',
+              attempts: 0,
+              disabled: false,
+              answer: answer.trim(),
+            };
+            matchCount++;
+          }
+        });
+      }
     });
 
     // Parse Policy Sections
@@ -294,6 +388,7 @@ const App: React.FC = () => {
     setIsLandingPage(true);
     setShowIntroQuiz(false);
     setShowInterview(false);
+    setShowEnglishDemo(false);
     setShowPolicy(false);
     setSelectedPolicyDetail(null);
     setShowPolicyModal(false);
@@ -390,6 +485,146 @@ const App: React.FC = () => {
             }
             });
         }
+    } else if (showEnglishDemo) {
+        // Find all inputs in current english demo tab in sequential order
+        const currentSection = ENGLISH_DEMO_SECTIONS[activeTab];
+        if (currentSection) {
+            // 현재 빈칸이 서브탭 내부인지 확인
+            const currentIdMatch = currentId.match(/^english-demo-\d+-(.+?)-(.+?)-(\d+)-(\d+)$/);
+            const isInSubTab = currentIdMatch && !currentId.includes('-closing-');
+            
+            if (isInSubTab) {
+                // 서브탭 내부인 경우: 현재 서브탭의 모든 빈칸 수집
+                const currentSkillId = currentIdMatch[1];
+                
+                // 현재 서브탭의 모든 빈칸 찾기
+                if (currentSection.skillCategories) {
+                    const currentCategory = currentSection.skillCategories.find(cat => cat.id === currentSkillId);
+                    if (currentCategory) {
+                        currentCategory.activities.forEach((activity) => {
+                            activity.content.forEach((line, lineIdx) => {
+                                const regex = /\[(.*?)\]/g;
+                                let matchCount = 0;
+                                while (regex.exec(line) !== null) {
+                                    currentInputs.push(`english-demo-${activeTab}-${currentSkillId}-${activity.id}-${lineIdx}-${matchCount}`);
+                                    matchCount++;
+                                }
+                            });
+                        });
+                    }
+                }
+                
+                // 현재 서브탭 내에서 다음 빈칸 찾기
+                const currentIndex = currentInputs.indexOf(currentId);
+                if (currentIndex !== -1) {
+                    for (let i = currentIndex + 1; i < currentInputs.length; i++) {
+                        const candidateId = currentInputs[i];
+                        if (!inputStates[candidateId]?.disabled) {
+                            const el = document.getElementById(`input-${candidateId}`);
+                            if (el) {
+                                focusAndScrollToInput(el);
+                                return;
+                            }
+                        }
+                    }
+                }
+                
+                // 현재 서브탭의 모든 빈칸이 비활성화된 경우, 다음 서브탭으로 이동
+                if (currentSection.skillCategories) {
+                    const currentCategoryIndex = currentSection.skillCategories.findIndex(cat => cat.id === currentSkillId);
+                    if (currentCategoryIndex !== -1 && currentCategoryIndex < currentSection.skillCategories.length - 1) {
+                        // 다음 서브탭으로 이동
+                        const nextCategory = currentSection.skillCategories[currentCategoryIndex + 1];
+                        setActiveSkillTab(nextCategory.id);
+                        
+                        // 다음 서브탭의 첫 번째 빈칸 찾기
+                        if (nextCategory.activities.length > 0) {
+                            const firstActivity = nextCategory.activities[0];
+                            if (firstActivity.content.length > 0) {
+                                const firstLine = firstActivity.content[0];
+                                const regex = /\[(.*?)\]/g;
+                                const match = regex.exec(firstLine);
+                                if (match) {
+                                    const firstInputId = `english-demo-${activeTab}-${nextCategory.id}-${firstActivity.id}-0-0`;
+                                    setTimeout(() => {
+                                        const el = document.getElementById(`input-${firstInputId}`);
+                                        if (el) {
+                                            focusAndScrollToInput(el);
+                                        }
+                                    }, 100);
+                                    return;
+                                }
+                            }
+                        }
+                    } else {
+                        // 마지막 서브탭인 경우, 다음 콘텐츠(closingContent)로 이동
+                        if (currentSection.closingContent) {
+                            let foundNext = false;
+                            currentSection.closingContent.forEach((line, lineIdx) => {
+                                if (foundNext) return;
+                                const regex = /\[(.*?)\]/g;
+                                let matchCount = 0;
+                                while (regex.exec(line) !== null) {
+                                    const closingId = `english-demo-${activeTab}-closing-${lineIdx}-${matchCount}`;
+                                    if (!inputStates[closingId]?.disabled) {
+                                        foundNext = true;
+                                        setTimeout(() => {
+                                            const el = document.getElementById(`input-${closingId}`);
+                                            if (el) {
+                                                focusAndScrollToInput(el);
+                                            }
+                                        }, 100);
+                                        return;
+                                    }
+                                    matchCount++;
+                                }
+                            });
+                        }
+                    }
+                }
+                return; // 서브탭 처리 완료
+            }
+            
+            // 서브탭이 아닌 경우: 전체 순서대로 수집
+            // Parse normal content if exists
+            if (currentSection.content) {
+                currentSection.content.forEach((line, lineIdx) => {
+                    const regex = /\[(.*?)\]/g;
+                    let matchCount = 0;
+                    while (regex.exec(line) !== null) {
+                        currentInputs.push(`english-demo-${activeTab}-${lineIdx}-${matchCount}`);
+                        matchCount++;
+                    }
+                });
+            }
+            // Parse skill categories if exists (실제 렌더링 시 사용하는 ID 형식과 일치)
+            if (currentSection.skillCategories) {
+                currentSection.skillCategories.forEach((category) => {
+                    category.activities.forEach((activity) => {
+                        activity.content.forEach((line, lineIdx) => {
+                            const regex = /\[(.*?)\]/g;
+                            let matchCount = 0;
+                            while (regex.exec(line) !== null) {
+                                // 실제 렌더링 시 사용하는 ID 형식: english-demo-{탭}-{스킬ID}-{활동ID}-{라인}-{매치}
+                                currentInputs.push(`english-demo-${activeTab}-${category.id}-${activity.id}-${lineIdx}-${matchCount}`);
+                                matchCount++;
+                            }
+                        });
+                    });
+                });
+            }
+            // Parse closingContent if exists
+            if (currentSection.closingContent) {
+                currentSection.closingContent.forEach((line, lineIdx) => {
+                    const regex = /\[(.*?)\]/g;
+                    let matchCount = 0;
+                    while (regex.exec(line) !== null) {
+                        currentInputs.push(`english-demo-${activeTab}-closing-${lineIdx}-${matchCount}`);
+                        matchCount++;
+                    }
+                });
+            }
+        }
     } else if (selectedPolicyDetail) {
         // Find all inputs in current policy detail tab in sequential order
         const policyDetail = POLICY_DETAILS.find(p => p.id === selectedPolicyDetail);
@@ -473,6 +708,36 @@ const App: React.FC = () => {
         if (el) {
           focusAndScrollToInput(el);
         }
+      } else if (showEnglishDemo) {
+        // 현재 섹션의 모든 빈칸이 비활성화된 경우
+        const currentSection = ENGLISH_DEMO_SECTIONS[activeTab];
+        if (currentSection) {
+          // 상단 콘텐츠의 빈칸인 경우 (형식: english-demo-{탭}-{라인}-{매치})
+          const isTopContent = currentId.match(/^english-demo-\d+-\d+-\d+$/);
+          if (isTopContent && currentSection.skillCategories && currentSection.skillCategories.length > 0) {
+            const firstCategory = currentSection.skillCategories[0];
+            setActiveSkillTab(firstCategory.id);
+            
+            // 첫 번째 서브탭의 첫 번째 빈칸 찾기
+            if (firstCategory.activities.length > 0) {
+              const firstActivity = firstCategory.activities[0];
+              if (firstActivity.content.length > 0) {
+                const firstLine = firstActivity.content[0];
+                const regex = /\[(.*?)\]/g;
+                const match = regex.exec(firstLine);
+                if (match) {
+                  const firstInputId = `english-demo-${activeTab}-${firstCategory.id}-${firstActivity.id}-0-0`;
+                  setTimeout(() => {
+                    const el = document.getElementById(`input-${firstInputId}`);
+                    if (el) {
+                      focusAndScrollToInput(el);
+                    }
+                  }, 100);
+                }
+              }
+            }
+          }
+        }
       }
     }
   };
@@ -482,16 +747,17 @@ const App: React.FC = () => {
     const inputVal = currentState.value.trim();
     const correctVal = currentState.answer;
 
-    // 띄어쓰기 및 · 기호 제거 후 비교 (허용답안 인정)
-    // 대소문자 구분하지 않음
-    const normalizedInput = inputVal.replace(/\s+/g, '').replace(/·/g, '').toLowerCase();
-    const normalizedAnswer = correctVal.replace(/\s+/g, '').replace(/·/g, '').toLowerCase();
+    // 정규화 함수: 띄어쓰기, · 기호, 반점(쉼표) 제거 후 소문자로 변환
+    const normalize = (str: string) => str.replace(/\s+/g, '').replace(/·/g, '').replace(/,/g, '').toLowerCase();
+    
+    const normalizedInput = normalize(inputVal);
+    const normalizedAnswer = normalize(correctVal);
 
     // 괄호와 그 안의 내용을 제거한 버전도 생성 (허용답안 인정)
     const answerWithoutParentheses = correctVal.replace(/\([^)]*\)/g, '').trim();
-    const normalizedAnswerWithoutParentheses = answerWithoutParentheses.replace(/\s+/g, '').replace(/·/g, '').toLowerCase();
+    const normalizedAnswerWithoutParentheses = normalize(answerWithoutParentheses);
 
-    // Logic A-1: Correct (띄어쓰기 및 · 기호 무시 비교 또는 괄호 제거 버전 비교, 대소문자 구분 안 함)
+    // Logic A-1: Correct (띄어쓰기, · 기호, 반점 무시 비교 또는 괄호 제거 버전 비교, 대소문자 구분 안 함)
     if (normalizedInput === normalizedAnswer || normalizedInput === normalizedAnswerWithoutParentheses) {
       playSound('correct');
       // Remove from history
@@ -570,6 +836,7 @@ const App: React.FC = () => {
     const keysToReveal = Object.keys(nextStates).filter(key => {
         if (showIntroQuiz) return key.startsWith('intro-');
         if (showInterview) return key.startsWith('interview-');
+        if (showEnglishDemo) return key.startsWith('english-demo-');
         if (showPolicy) return key.startsWith('policy-') && !key.startsWith('policy-detail-');
         if (selectedPolicyDetail) return key.startsWith('policy-detail-');
         return key.startsWith(`${activeTab}-`); // Only reveal current tab in main view to avoid spoilers
@@ -582,11 +849,13 @@ const App: React.FC = () => {
         ? allKeys.filter(k => k.startsWith('intro-'))
         : showInterview
         ? allKeys.filter(k => k.startsWith('interview-'))
+        : showEnglishDemo
+        ? allKeys.filter(k => k.startsWith('english-demo-'))
         : selectedPolicyDetail
         ? allKeys.filter(k => k.startsWith('policy-detail-'))
         : showPolicy
         ? allKeys.filter(k => k.startsWith('policy-') && !k.startsWith('policy-detail-'))
-        : allKeys.filter(k => !k.startsWith('intro-') && !k.startsWith('interview-') && !k.startsWith('policy-')); // Reveal all main content if in main view
+        : allKeys.filter(k => !k.startsWith('intro-') && !k.startsWith('interview-') && !k.startsWith('english-demo-') && !k.startsWith('policy-')); // Reveal all main content if in main view
 
     targetKeys.forEach(id => {
       const state = nextStates[id];
@@ -602,10 +871,12 @@ const App: React.FC = () => {
     });
 
     // If in main view, prevent auto-transitions by marking tabs as done
-    if (!showIntroQuiz && !showInterview && !showPolicy && !selectedPolicyDetail) {
+    if (!showIntroQuiz && !showInterview && !showEnglishDemo && !showPolicy && !selectedPolicyDetail) {
          SECTIONS.forEach((_, idx) => completedTabsRef.current.add(idx));
     } else if (showInterview) {
          INTERVIEW_SECTIONS.forEach((_, idx) => completedTabsRef.current.add(idx));
+    } else if (showEnglishDemo) {
+         ENGLISH_DEMO_SECTIONS.forEach((_, idx) => completedTabsRef.current.add(idx));
     } else if (showPolicy) {
          POLICY_SECTIONS.forEach((_, idx) => completedTabsRef.current.add(idx));
     }
@@ -960,6 +1231,120 @@ const collectPolicyDetailInputIds = (
         return;
     }
 
+    // 3-1. ENGLISH DEMO TAB COMPLETION LOGIC
+    if (showEnglishDemo) {
+        const currentSection = ENGLISH_DEMO_SECTIONS[activeTab];
+        if (!currentSection) return;
+
+        // Gather IDs for current english demo tab
+        const tabInputIds: string[] = [];
+        
+        // Parse normal content if exists
+        if (currentSection.content) {
+          currentSection.content.forEach((line, lineIdx) => {
+            const regex = /\[(.*?)\]/g;
+            let matchCount = 0;
+            while (regex.exec(line) !== null) {
+              tabInputIds.push(`english-demo-${activeTab}-${lineIdx}-${matchCount}`);
+              matchCount++;
+            }
+          });
+        }
+        
+        // Parse skill categories if exists
+        if (currentSection.skillCategories) {
+          currentSection.skillCategories.forEach((category, catIdx) => {
+            category.activities.forEach((activity, actIdx) => {
+              activity.content.forEach((line, lineIdx) => {
+                const regex = /\[(.*?)\]/g;
+                let matchCount = 0;
+                while (regex.exec(line) !== null) {
+                  tabInputIds.push(`english-demo-${activeTab}-skill-${catIdx}-${actIdx}-${lineIdx}-${matchCount}`);
+                  matchCount++;
+                }
+              });
+            });
+          });
+        }
+
+        if (tabInputIds.length === 0) return;
+
+        // Check if all are disabled (completed or failed)
+        const allComplete = tabInputIds.length > 0 && 
+                            tabInputIds.every(id => {
+                              const state = inputStates[id];
+                              return state && (state.disabled || state.status === 'correct' || state.status === 'wrong-2');
+                            });
+
+        if (allComplete) {
+          if (completedTabsRef.current.has(activeTab)) {
+            return;
+          }
+
+          completedTabsRef.current.add(activeTab);
+          isTransitioningRef.current = true;
+
+          setShowToast({ message: "Section Complete!", type: "success" });
+          playSound('complete');
+          if (typeof confetti === 'function') {
+              confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+              });
+          }
+
+          setTimeout(() => {
+            // Check Global Completion (English Demo sections only)
+            const englishDemoInputs = (Object.values(inputStates) as InputState[])
+                .filter(s => s.id.startsWith('english-demo-'));
+            const allInputsDisabled = englishDemoInputs.every(s => s.disabled);
+
+            if (allInputsDisabled) {
+              playSound('finish');
+              setShowToast({ message: "모든 학습을 완료했습니다!", type: "success" });
+              isTransitioningRef.current = false;
+            } else if (activeTab < ENGLISH_DEMO_SECTIONS.length - 1) {
+              const nextTab = activeTab + 1;
+              setActiveTab(nextTab);
+              
+              setTimeout(() => {
+                const nextSection = ENGLISH_DEMO_SECTIONS[nextTab];
+                const nextTabIds: string[] = [];
+                nextSection.content.forEach((line, lineIdx) => {
+                    const regex = /\[(.*?)\]/g;
+                    let matchCount = 0;
+                    while (regex.exec(line) !== null) {
+                        nextTabIds.push(`english-demo-${nextTab}-${lineIdx}-${matchCount}`);
+                        matchCount++;
+                    }
+                });
+
+                const firstAvailableId = nextTabIds.find(id => !inputStates[id]?.disabled);
+                if (firstAvailableId) {
+                    const el = document.getElementById(`input-${firstAvailableId}`);
+                    if (el) {
+                        focusAndScrollToInput(el);
+                    }
+                } else {
+                    const el = document.querySelector(`#tab-content-${nextTab} input`) as HTMLInputElement;
+                    if (el) {
+                        focusAndScrollToInput(el);
+                    }
+                }
+
+                isTransitioningRef.current = false;
+                setShowToast(null);
+              }, 100);
+            } else {
+              isTransitioningRef.current = false;
+              setShowToast(null);
+            }
+          }, 1000);
+        }
+        return;
+    }
+
     // 3. POLICY TAB COMPLETION LOGIC
     if (showPolicy) {
         const currentSection = POLICY_SECTIONS[activeTab];
@@ -1129,12 +1514,12 @@ const collectPolicyDetailInputIds = (
         }
       }, 1000);
     }
-  }, [inputStates, activeTab, activePolicyTab, isLandingPage, showIntroQuiz, showInterview, showPolicy, selectedPolicyDetail]);
+  }, [inputStates, activeTab, activePolicyTab, isLandingPage, showIntroQuiz, showInterview, showEnglishDemo, showPolicy, selectedPolicyDetail]);
 
 
   // --- Render Helpers ---
 
-  const renderLine = (text: string, secIdx: number | string, lineIdx: number, matchOffset: number = 0, isInterview: boolean = false, isPolicy: boolean = false) => {
+  const renderLine = (text: string, secIdx: number | string, lineIdx: number, matchOffset: number = 0, isInterview: boolean = false, isEnglishDemo: boolean = false, isPolicy: boolean = false) => {
     // <br> 태그를 기준으로 텍스트를 분할
     const lines = text.split(/<br\s*\/?>/i);
     const allParts: React.ReactNode[] = [];
@@ -1173,18 +1558,22 @@ const collectPolicyDetailInputIds = (
         ? `policy-${secIdx}-${lineIdx}-${matchCount}` 
         : isInterview 
         ? `interview-${secIdx}-${lineIdx}-${matchCount}` 
+        : isEnglishDemo
+        ? `english-demo-${secIdx}-${lineIdx}-${matchCount}` 
         : `${secIdx}-${lineIdx}-${matchCount}`;
       let state = inputStates[id];
       
       // Fallback: state를 찾지 못한 경우, 같은 라인에서 다른 matchCount로 찾아보기
-      if (!state && (isInterview || isPolicy || (typeof secIdx === 'string' && secIdx.startsWith('policy-detail-')))) {
+      if (!state && (isInterview || isEnglishDemo || isPolicy || (typeof secIdx === 'string' && secIdx.startsWith('policy-detail-')))) {
         // 같은 라인에서 matchCount를 0부터 시작해서 찾아보기
         for (let i = 0; i < 10; i++) { // 최대 10개까지 시도
           const fallbackId = typeof secIdx === 'string' && secIdx.startsWith('policy-detail-')
             ? `${secIdx}-${i}`
             : isPolicy 
             ? `policy-${secIdx}-${lineIdx}-${i}` 
-            : `interview-${secIdx}-${lineIdx}-${i}`;
+            : isInterview
+            ? `interview-${secIdx}-${lineIdx}-${i}`
+            : `english-demo-${secIdx}-${lineIdx}-${i}`;
           const fallbackState = inputStates[fallbackId];
           if (fallbackState) {
             // answer가 일치하는지 확인
@@ -1205,7 +1594,8 @@ const collectPolicyDetailInputIds = (
             isReviewNeeded={wrongHistory.has(state.id)}
             onUpdate={updateInput}
             onSubmit={handleValidate}
-            onFocusRequest={() => {}} 
+            onFocusRequest={() => {}}
+            isEnglishMode={isEnglishDemo}
           />
         );
       } else {
@@ -1225,7 +1615,8 @@ const collectPolicyDetailInputIds = (
               isReviewNeeded={false}
               onUpdate={updateInput}
               onSubmit={handleValidate}
-              onFocusRequest={() => {}} 
+              onFocusRequest={() => {}}
+              isEnglishMode={isEnglishDemo}
             />
           );
       }
@@ -1517,6 +1908,22 @@ const collectPolicyDetailInputIds = (
                             <ChevronRight size={24} />
                         </div>
                     </button>
+                    <button 
+                        onClick={() => {
+                            playSound('complete');
+                            setIsLandingPage(false);
+                            setShowIntroQuiz(false);
+                            setShowInterview(false);
+                            setShowEnglishDemo(true);
+                            setActiveTab(0);
+                        }}
+                        className="w-full max-w-md group relative flex items-center justify-between px-8 py-5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white text-xl font-bold rounded-2xl transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/25 active:scale-95"
+                    >
+                        <span className="flex-1 text-center">영어수업실연 답안틀</span>
+                        <div className="bg-white/20 rounded-full p-1 group-hover:translate-x-1 transition-transform">
+                            <ChevronRight size={24} />
+                        </div>
+                    </button>
                 </div>
             </div>
             
@@ -1782,7 +2189,7 @@ const collectPolicyDetailInputIds = (
                         {idx + 1}
                       </div>
                       <div className={`text-xl md:text-2xl font-bold ${colors.text} flex-1 leading-[2]`}>
-                        {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, true)}
+                        {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, false, true)}
                       </div>
                     </div>
                     {/* 콘텐츠 */}
@@ -1805,7 +2212,7 @@ const collectPolicyDetailInputIds = (
                     <div className="px-5 py-3 flex items-center gap-3">
                       <div className={`${colors.accent} w-2 h-6 rounded-full shrink-0`}></div>
                       <div className={`text-lg md:text-xl font-semibold ${colors.text} flex-1 leading-[2]`}>
-                        {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, true)}
+                        {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, false, true)}
                       </div>
                     </div>
                     {/* 콘텐츠 */}
@@ -1829,7 +2236,7 @@ const collectPolicyDetailInputIds = (
                   
                   <div className="py-1">
                     <div className={`text-base md:text-lg text-foreground leading-[2]`}>
-                      {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, true)}
+                      {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, false, true)}
                     </div>
                     {hasChildren && (
                       <div className="mt-2 ml-2">
@@ -1849,7 +2256,7 @@ const collectPolicyDetailInputIds = (
                 
                 <div className="py-0.5">
                   <div className="text-sm md:text-base text-muted-foreground leading-[2]">
-                    {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, true)}
+                    {renderLine(item.title, `policy-detail-${policyDetailIdx}-${itemPath}`, 0, 0, false, false, true)}
                   </div>
                   {hasChildren && (
                     <div className="mt-1 ml-2">
@@ -1959,7 +2366,7 @@ const collectPolicyDetailInputIds = (
           {section.content.map((line, idx) => (
             <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
               <div className={commonTextClass}>
-                {renderLine(line, activeTab, idx, 0, false, true)}
+                {renderLine(line, activeTab, idx, 0, false, false, true)}
               </div>
             </div>
           ))}
@@ -2033,6 +2440,448 @@ const collectPolicyDetailInputIds = (
           {/* Dynamic Content Block Render */}
           <div id={`tab-content-${activeTab}`} className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
             {renderPolicyContentBlocks()}
+          </div>
+
+        </main>
+
+        {/* Toast Notification */}
+        {showToast && (
+          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-8 py-4 rounded-full shadow-2xl shadow-primary/30 flex items-center gap-4 z-50 animate-bounce-gentle">
+            <div className="bg-white/20 p-1 rounded-full"><CheckCircle size={24} /></div>
+            <span className="text-xl font-bold">{showToast.message}</span>
+          </div>
+        )}
+        
+        <style>{`
+          @keyframes bounce-gentle {
+              0%, 100% { transform: translate(-50%, 0); }
+              50% { transform: translate(-50%, -10px); }
+          }
+          .animate-bounce-gentle {
+              animation: bounce-gentle 2s infinite;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // --- VIEW: ENGLISH DEMO ---
+  if (showEnglishDemo) {
+    const section = ENGLISH_DEMO_SECTIONS[activeTab];
+    const commonTextClass = "text-[1.9rem] leading-[4rem] text-card-foreground font-medium break-keep tracking-wide";
+
+    // 일반 콘텐츠 렌더링 (도입, Activity 1, 활동 마무리, 정리)
+    const renderNormalContent = () => {
+      if (!section.content) return null;
+
+      // 각 라인에 대한 matchOffset 계산 (전체 섹션 기준)
+      let globalMatchOffset = 0;
+      const lineOffsets: Map<number, number> = new Map();
+      
+      section.content.forEach((line, idx) => {
+        lineOffsets.set(idx, globalMatchOffset);
+        const matches = line.match(/\[(.*?)\]/g);
+        if (matches) {
+          globalMatchOffset += matches.length;
+        }
+      });
+
+      return (
+        <div className="space-y-6">
+          {section.content.map((line, idx) => {
+            const matchOffset = lineOffsets.get(idx) ?? 0;
+            
+            // 헤더 라인인 경우 스타일링 (콜론으로 끝나는 경우)
+            if (line.trim().endsWith(':') && !line.includes('[')) {
+              return (
+                <div key={idx} className="mt-8 mb-4">
+                  <h3 className="text-2xl md:text-3xl font-bold text-primary border-b-2 border-primary/30 pb-2">
+                    {line}
+                  </h3>
+                </div>
+              );
+            }
+            
+            // 빈 줄인 경우
+            if (!line.trim()) {
+              return <div key={idx} className="h-4" />;
+            }
+            
+            return (
+              <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
+                <div className={commonTextClass}>
+                  {renderLine(line, activeTab, idx, matchOffset, false, true)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    };
+
+    // 기능별 서브탭 + 활동 카드 렌더링 (도입, Activity 1, Activity 2, Activity 3)
+    const renderSkillBasedContent = () => {
+      if (!section.skillCategories) return null;
+
+      const skillColors: Record<string, { bg: string; border: string; text: string; icon: string; cardBg: string; cardText: string }> = {
+        listening: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800', icon: '👂', cardBg: 'bg-blue-50', cardText: 'text-slate-800' },
+        speaking: { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-800', icon: '🗣️', cardBg: 'bg-green-50', cardText: 'text-slate-800' },
+        reading: { bg: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-800', icon: '📖', cardBg: 'bg-amber-50', cardText: 'text-slate-800' },
+        writing: { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-800', icon: '✏️', cardBg: 'bg-purple-50', cardText: 'text-slate-800' }
+      };
+
+      const currentSkillCategory = section.skillCategories.find(cat => cat.id === activeSkillTab);
+      // Activity 1의 경우 듣말읽/쓰 2개만 있으므로 첫번째 카테고리 선택
+      const effectiveSkillCategory = currentSkillCategory || section.skillCategories[0];
+
+      return (
+        <div className="space-y-8">
+          {/* 상단 도입 콘텐츠 */}
+          {section.content && section.content.length > 0 && (() => {
+            // 도입 탭의 경우 정리 탭과 동일한 스타일 적용
+            if (section.id === 'introduction') {
+              // 각 라인에 대한 matchOffset 계산 (전체 섹션 기준)
+              let globalMatchOffset = 0;
+              const lineOffsets: Map<number, number> = new Map();
+              
+              section.content.forEach((line, idx) => {
+                lineOffsets.set(idx, globalMatchOffset);
+                const matches = line.match(/\[(.*?)\]/g);
+                if (matches) {
+                  globalMatchOffset += matches.length;
+                }
+              });
+
+              return (
+                <div className="space-y-6 mb-8">
+                  {section.content.map((line, idx) => {
+                    const matchOffset = lineOffsets.get(idx) ?? 0;
+                    
+                    // 헤더 라인인 경우 스타일링 (콜론으로 끝나는 경우)
+                    if (line.trim().endsWith(':') && !line.includes('[')) {
+                      return (
+                        <div key={idx} className="mt-8 mb-4">
+                          <h3 className="text-2xl md:text-3xl font-bold text-primary border-b-2 border-primary/30 pb-2">
+                            {line}
+                          </h3>
+                        </div>
+                      );
+                    }
+                    
+                    // 빈 줄인 경우
+                    if (!line.trim()) {
+                      return <div key={idx} className="h-4" />;
+                    }
+                    
+                    return (
+                      <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
+                        <div className={commonTextClass}>
+                          {renderLine(line, activeTab, idx, matchOffset, false, true)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            }
+            
+            // Activity 1, 2, 3의 경우 기존 스타일 유지
+            return (
+              <div className="bg-card p-8 rounded-3xl border border-border shadow-md mb-8">
+                {/* 섹션별 헤더 */}
+                {section.id === 'activity3' && (
+                  <h3 className="text-2xl font-bold text-primary mb-4 border-b-2 border-primary/30 pb-2">활동 소개</h3>
+                )}
+                {section.id === 'activity2' && (
+                  <h3 className="text-2xl font-bold text-primary mb-4 border-b-2 border-primary/30 pb-2">활동 소개</h3>
+                )}
+                {section.id === 'activity1' && (
+                  <h3 className="text-2xl font-bold text-primary mb-4 border-b-2 border-primary/30 pb-2">활동 소개</h3>
+                )}
+                <div className="space-y-4">
+                  {section.content.map((line, idx) => {
+                    // 헤더 라인인 경우 스타일링 (콜론으로 끝나고 대괄호가 없는 경우)
+                    if (line.trim().endsWith(':') && !line.includes('[')) {
+                      return (
+                        <div key={idx} className="mt-6 mb-2">
+                          <h3 className="text-2xl md:text-3xl font-bold text-primary border-b-2 border-primary/30 pb-2">
+                            {line}
+                          </h3>
+                        </div>
+                      );
+                    }
+                    if (!line.trim()) return <div key={idx} className="h-2" />;
+                    
+                    // matchOffset 계산
+                    let matchOffset = 0;
+                    for (let i = 0; i < idx; i++) {
+                      const prevMatches = section.content![i].match(/\[(.*?)\]/g);
+                      if (prevMatches) matchOffset += prevMatches.length;
+                    }
+                    
+                    return (
+                      <div key={idx} className={commonTextClass}>
+                        {renderLine(line, activeTab, idx, matchOffset, false, true)}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* 기능별 서브탭 */}
+          <div className={`grid gap-3 mb-8 ${section.skillCategories.length <= 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'}`}>
+            {section.skillCategories.map((category) => {
+              const colors = skillColors[category.id] || skillColors.listening;
+              const isActive = activeSkillTab === category.id || (section.skillCategories!.length <= 2 && section.skillCategories![0].id === category.id && !currentSkillCategory);
+              
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveSkillTab(category.id)}
+                  className={`
+                    relative p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-2
+                    ${isActive 
+                      ? `${colors.bg} ${colors.border} ${colors.text} shadow-lg scale-105` 
+                      : 'bg-card border-border text-muted-foreground hover:border-primary/30 hover:bg-secondary/50'}
+                  `}
+                >
+                  <span className="text-3xl">{category.icon || colors.icon}</span>
+                  <span className="font-bold text-lg">{category.title}</span>
+                  <span className="text-xs opacity-70">{category.activities.length}개 활동</span>
+                  {isActive && (
+                    <div className={`absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-4 h-4 rotate-45 ${colors.bg} ${colors.border} border-t-0 border-l-0`} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 선택된 기능의 활동 카드들 */}
+          {effectiveSkillCategory && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className={`grid gap-6 ${effectiveSkillCategory.activities.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
+                {effectiveSkillCategory.activities.map((activity, activityIdx) => {
+                  const colors = skillColors[effectiveSkillCategory.id] || skillColors.listening;
+                  
+                  // 활동 카드 내 라인별 matchOffset 계산
+                  let activityMatchOffset = 0;
+                  const activityLineOffsets: Map<number, number> = new Map();
+                  
+                  activity.content.forEach((line, lineIdx) => {
+                    activityLineOffsets.set(lineIdx, activityMatchOffset);
+                    const matches = line.match(/\[(.*?)\]/g);
+                    if (matches) {
+                      activityMatchOffset += matches.length;
+                    }
+                  });
+
+                  // 활동 카드용 고유 secIdx 생성 (탭-스킬-활동)
+                  const activitySecIdx = `${activeTab}-${effectiveSkillCategory.id}-${activity.id}`;
+
+                  return (
+                    <div 
+                      key={activity.id}
+                      className={`
+                        ${colors.cardBg} ${colors.border} border-2 rounded-3xl p-6 shadow-md
+                        hover:shadow-lg transition-shadow duration-300
+                      `}
+                    >
+                      {/* 활동 카드 헤더 */}
+                      <div className={`flex items-center gap-3 mb-4 pb-3 border-b ${colors.border}`}>
+                        <span className="text-2xl">{effectiveSkillCategory?.icon || colors.icon}</span>
+                        <h4 className={`text-xl font-bold ${colors.text}`}>
+                          ●{activity.title}
+                        </h4>
+                      </div>
+                      
+                      {/* 활동 카드 내용 - 가독성 개선 */}
+                      <div className="space-y-3">
+                        {activity.content.map((line, lineIdx) => {
+                          const matchOffset = activityLineOffsets.get(lineIdx) ?? 0;
+                          
+                          // 빈 줄인 경우
+                          if (!line.trim()) {
+                            return <div key={lineIdx} className="h-3" />;
+                          }
+                          
+                          return (
+                            <div 
+                              key={lineIdx} 
+                              className={`text-lg leading-relaxed ${colors.cardText} font-medium 
+                                [&_input]:text-slate-800 
+                                [&_input]:border-slate-300 
+                                [&_input]:placeholder:text-slate-400
+                                [&_input]:bg-white
+                                [&_input.border-emerald-500]:!bg-emerald-100
+                                [&_input.border-emerald-500]:!text-emerald-700
+                                [&_input.border-orange-500]:!bg-orange-50
+                                [&_input.border-destructive]:!bg-red-200
+                                [&_input.border-destructive]:!text-red-800
+                                [&_input.bg-red-500\\/15]:!bg-red-100
+                              `}
+                            >
+                              {renderLine(line, activitySecIdx, lineIdx, matchOffset, false, true)}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 하단 마무리 콘텐츠 (도입의 학습문제 확인, Activity 3의 활동 마무리) */}
+          {section.closingContent && section.closingContent.length > 0 && (() => {
+            // closingContent용 matchOffset 계산
+            const closingLineOffsets: Map<number, number> = new Map();
+            let closingMatchOffset = 0;
+            section.closingContent.forEach((line, idx) => {
+              closingLineOffsets.set(idx, closingMatchOffset);
+              const matches = line.match(/\[(.*?)\]/g);
+              if (matches) closingMatchOffset += matches.length;
+            });
+            
+            // 도입 탭의 경우 정리 탭과 동일한 스타일 적용
+            if (section.id === 'introduction') {
+              return (
+                <div className="space-y-6 mt-8">
+                  {section.closingContent.map((line, idx) => {
+                    const matchOffset = closingLineOffsets.get(idx) ?? 0;
+                    
+                    // 헤더 라인인 경우 스타일링 (콜론으로 끝나는 경우)
+                    if (line.trim().endsWith(':') && !line.includes('[')) {
+                      return (
+                        <div key={idx} className="mt-8 mb-4">
+                          <h3 className="text-2xl md:text-3xl font-bold text-primary border-b-2 border-primary/30 pb-2">
+                            {line}
+                          </h3>
+                        </div>
+                      );
+                    }
+                    
+                    // 빈 줄인 경우
+                    if (!line.trim()) {
+                      return <div key={idx} className="h-4" />;
+                    }
+                    
+                    return (
+                      <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
+                        <div className={commonTextClass}>
+                          {renderLine(line, `${activeTab}-closing`, idx, matchOffset, false, true)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            }
+            
+            // Activity 3 등 다른 섹션은 기존 스타일 유지
+            return (
+              <div className="bg-card p-8 rounded-3xl border border-border shadow-md mt-8">
+                <div className="space-y-4">
+                  {section.closingContent.map((line, idx) => {
+                    // 헤더 라인인 경우 스타일링
+                    if (line.trim().endsWith(':') && !line.includes('[')) {
+                      return (
+                        <div key={idx} className="mt-6 mb-2">
+                          <h3 className="text-2xl md:text-3xl font-bold text-primary border-b-2 border-primary/30 pb-2">
+                            {line}
+                          </h3>
+                        </div>
+                      );
+                    }
+                    if (!line.trim()) return <div key={idx} className="h-2" />;
+                    
+                    const matchOffset = closingLineOffsets.get(idx) ?? 0;
+                    
+                    return (
+                      <div key={idx} className={commonTextClass}>
+                        {renderLine(line, `${activeTab}-closing`, idx, matchOffset, false, true)}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      );
+    };
+
+    return (
+      <div className="min-h-screen flex flex-col items-center pb-20 bg-background">
+        {/* Header */}
+        <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
+          <button 
+            onClick={resetToInitialState}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            title="첫 화면으로"
+          >
+            <div className="bg-primary p-2 rounded-lg">
+              <BookOpen className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">영어수업실연 답안틀</h1>
+          </button>
+          <div className="flex items-center gap-3 sm:gap-4">
+            {wrongHistory.size > 0 && (
+              <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-full border border-destructive/20 text-destructive text-sm font-medium animate-pulse">
+                <AlertTriangle size={16} />
+                <span>복습: {wrongHistory.size}</span>
+              </div>
+            )}
+            <button 
+              onClick={revealAllAnswers}
+              className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground text-sm font-medium transition-colors"
+              title="정답 보기"
+            >
+              <Eye size={18} />
+              <span className="hidden sm:inline">정답 보기</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="w-full max-w-5xl p-6 md:p-12 flex-1">
+          
+          {/* Main Tabs (도입, Activity 1, Activity 2, Activity 3, 활동 마무리, 정리) */}
+          {ENGLISH_DEMO_SECTIONS.length > 1 && (
+            <div className="flex flex-wrap gap-3 mb-12 justify-center">
+              {ENGLISH_DEMO_SECTIONS.map((sec, idx) => {
+                const isCurrent = idx === activeTab;
+                const sectionIds = Object.keys(inputStates).filter(k => k.startsWith(`english-demo-${idx}-`));
+                const isDone = sectionIds.length > 0 && sectionIds.every(id => inputStates[id].status === 'correct' || inputStates[id].status === 'wrong-2');
+
+                return (
+                  <button
+                    key={sec.id}
+                    onClick={() => {
+                      setActiveTab(idx);
+                      setActiveSkillTab('listening'); // 탭 변경 시 서브탭 초기화
+                    }}
+                    className={`
+                      px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 border
+                      ${isCurrent 
+                        ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105' 
+                        : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'}
+                      ${isDone && !isCurrent ? 'border-primary/50 text-primary bg-primary/10' : ''}
+                    `}
+                  >
+                    {isDone && <CheckCircle size={14} />}
+                    {sec.title}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Dynamic Content Block Render */}
+          <div id={`tab-content-${activeTab}`} className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
+            {section.skillCategories ? renderSkillBasedContent() : renderNormalContent()}
           </div>
 
         </main>
