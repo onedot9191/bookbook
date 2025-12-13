@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { BookOpen, CheckCircle, ChevronRight, AlertTriangle, Lightbulb, Target, Shield, Users, Heart, Eye, RotateCcw, Home, List, X } from 'lucide-react';
+import { BookOpen, CheckCircle, ChevronRight, AlertTriangle, Lightbulb, Target, Shield, Users, Heart, Eye, RotateCcw, Home, List, X, Volume2, VolumeX } from 'lucide-react';
 import { SECTIONS, INTRO_CONTENT, INTERVIEW_SECTIONS, ENGLISH_DEMO_SECTIONS, POLICY_SECTIONS, POLICY_DETAILS } from './constants';
 import { InputState, STORAGE_KEY } from './types';
 import { ClozeInput } from './components/ClozeInput';
 import { playSound } from './sounds';
+import { speakText, stopSpeaking, loadVoices } from './utils/tts';
 
 // Global declaration for confetti
 declare var confetti: any;
@@ -23,6 +24,8 @@ const App: React.FC = () => {
   const [wrongHistory, setWrongHistory] = useState<Set<string>>(new Set());
   const [showToast, setShowToast] = useState<{message: string, type: 'success' | 'info'} | null>(null);
   const [activeSkillTab, setActiveSkillTab] = useState<string>('listening');
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingText, setSpeakingText] = useState<string | null>(null);
   
   // Ref to track if we are in a transition period to prevent double triggers
   const isTransitioningRef = useRef(false);
@@ -52,6 +55,41 @@ const App: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [showToast]);
+
+  // TTS 음성 목록 로드
+  useEffect(() => {
+    loadVoices();
+  }, []);
+
+  // TTS 재생 상태 모니터링
+  useEffect(() => {
+    const checkSpeaking = setInterval(() => {
+      if (!window.speechSynthesis.speaking && isSpeaking) {
+        setIsSpeaking(false);
+        setSpeakingText(null);
+      }
+    }, 100);
+
+    return () => clearInterval(checkSpeaking);
+  }, [isSpeaking]);
+
+  // 텍스트 읽기 함수
+  const handleSpeak = (text: string) => {
+    if (isSpeaking && speakingText === text) {
+      stopSpeaking();
+      setIsSpeaking(false);
+      setSpeakingText(null);
+    } else {
+      stopSpeaking();
+      // 빈칸 제거하고 텍스트 정리
+      const cleanText = text.replace(/\[(.*?)\]/g, '$1').replace(/\(.*?\)/g, '').trim();
+      if (cleanText) {
+        speakText(cleanText, 'en-US', 0.9, 1.0);
+        setIsSpeaking(true);
+        setSpeakingText(text);
+      }
+    }
+  };
 
   // Auto-focus first input when intro quiz starts
   useEffect(() => {
@@ -2508,7 +2546,18 @@ const collectPolicyDetailInputIds = (
             }
             
             return (
-              <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
+              <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md relative group">
+                <button
+                  onClick={() => handleSpeak(line)}
+                  className="absolute top-4 right-4 p-2 hover:bg-secondary rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  aria-label="읽기"
+                >
+                  {isSpeaking && speakingText === line ? (
+                    <VolumeX size={18} className="text-muted-foreground" />
+                  ) : (
+                    <Volume2 size={18} className="text-muted-foreground" />
+                  )}
+                </button>
                 <div className={commonTextClass}>
                   {renderLine(line, activeTab, idx, matchOffset, false, true)}
                 </div>
@@ -2583,9 +2632,22 @@ const collectPolicyDetailInputIds = (
                     if (isLetterContent) {
                       return (
                         <div key={idx} className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 p-8 rounded-3xl border-2 border-pink-300 dark:border-pink-700 shadow-md">
-                          <div className="flex items-start gap-3 mb-2">
-                            <span className="text-2xl">✉️</span>
-                            <span className="text-sm font-semibold text-pink-700 dark:text-pink-300 uppercase tracking-wide">편지 내용</span>
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex items-start gap-3">
+                              <span className="text-2xl">✉️</span>
+                              <span className="text-sm font-semibold text-pink-700 dark:text-pink-300 uppercase tracking-wide">편지 내용</span>
+                            </div>
+                            <button
+                              onClick={() => handleSpeak(line)}
+                              className="p-2 hover:bg-pink-200 dark:hover:bg-pink-800 rounded-lg transition-colors"
+                              aria-label="읽기"
+                            >
+                              {isSpeaking && speakingText === line ? (
+                                <VolumeX size={18} className="text-pink-700 dark:text-pink-300" />
+                              ) : (
+                                <Volume2 size={18} className="text-pink-700 dark:text-pink-300" />
+                              )}
+                            </button>
                           </div>
                           <div className={commonTextClass}>
                             {renderLine(line, activeTab, idx, matchOffset, false, true)}
@@ -2595,7 +2657,18 @@ const collectPolicyDetailInputIds = (
                     }
                     
                     return (
-                      <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
+                      <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md relative group">
+                        <button
+                          onClick={() => handleSpeak(line)}
+                          className="absolute top-4 right-4 p-2 hover:bg-secondary rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                          aria-label="읽기"
+                        >
+                          {isSpeaking && speakingText === line ? (
+                            <VolumeX size={18} className="text-muted-foreground" />
+                          ) : (
+                            <Volume2 size={18} className="text-muted-foreground" />
+                          )}
+                        </button>
                         <div className={commonTextClass}>
                           {renderLine(line, activeTab, idx, matchOffset, false, true)}
                         </div>
@@ -2641,8 +2714,21 @@ const collectPolicyDetailInputIds = (
                     }
                     
                     return (
-                      <div key={idx} className={commonTextClass}>
-                        {renderLine(line, activeTab, idx, matchOffset, false, true)}
+                      <div key={idx} className="relative group">
+                        <button
+                          onClick={() => handleSpeak(line)}
+                          className="absolute -top-2 -right-2 p-2 hover:bg-secondary rounded-lg transition-colors opacity-0 group-hover:opacity-100 z-10"
+                          aria-label="읽기"
+                        >
+                          {isSpeaking && speakingText === line ? (
+                            <VolumeX size={16} className="text-muted-foreground" />
+                          ) : (
+                            <Volume2 size={16} className="text-muted-foreground" />
+                          )}
+                        </button>
+                        <div className={commonTextClass}>
+                          {renderLine(line, activeTab, idx, matchOffset, false, true)}
+                        </div>
                       </div>
                     );
                   })}
@@ -2716,14 +2802,35 @@ const collectPolicyDetailInputIds = (
                       `}
                     >
                       {/* 활동 카드 헤더 */}
-                      <div className={`flex items-center gap-3 mb-4 pb-3 border-b ${isIntroductionLetter ? 'border-pink-300 dark:border-pink-700' : colors.border}`}>
-                        {isIntroductionLetter && (
-                          <span className="text-2xl">✉️</span>
-                        )}
-                        <span className="text-2xl">{effectiveSkillCategory?.icon || colors.icon}</span>
-                        <h4 className={`text-xl font-bold ${isIntroductionLetter ? 'text-pink-700 dark:text-pink-300' : colors.text}`}>
-                          ●{activity.title}
-                        </h4>
+                      <div className={`flex items-center justify-between gap-3 mb-4 pb-3 border-b ${isIntroductionLetter ? 'border-pink-300 dark:border-pink-700' : colors.border}`}>
+                        <div className="flex items-center gap-3">
+                          {isIntroductionLetter && (
+                            <span className="text-2xl">✉️</span>
+                          )}
+                          <span className="text-2xl">{effectiveSkillCategory?.icon || colors.icon}</span>
+                          <h4 className={`text-xl font-bold ${isIntroductionLetter ? 'text-pink-700 dark:text-pink-300' : colors.text}`}>
+                            ●{activity.title}
+                          </h4>
+                        </div>
+                        {/* 활동 카드 내용 전체를 읽기 위한 스피커 버튼 */}
+                        <button
+                          onClick={() => {
+                            const allText = activity.content.join(' ');
+                            handleSpeak(allText);
+                          }}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isIntroductionLetter 
+                              ? 'hover:bg-pink-200 dark:hover:bg-pink-800' 
+                              : 'hover:bg-white/50 dark:hover:bg-black/20'
+                          }`}
+                          aria-label="읽기"
+                        >
+                          {isSpeaking && speakingText === activity.content.join(' ') ? (
+                            <VolumeX size={18} className={isIntroductionLetter ? 'text-pink-700 dark:text-pink-300' : colors.text} />
+                          ) : (
+                            <Volume2 size={18} className={isIntroductionLetter ? 'text-pink-700 dark:text-pink-300' : colors.text} />
+                          )}
+                        </button>
                       </div>
                       
                       {/* 활동 카드 내용 - 가독성 개선 */}
@@ -2799,7 +2906,18 @@ const collectPolicyDetailInputIds = (
                     }
                     
                     return (
-                      <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
+                      <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md relative group">
+                        <button
+                          onClick={() => handleSpeak(line)}
+                          className="absolute top-4 right-4 p-2 hover:bg-secondary rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                          aria-label="읽기"
+                        >
+                          {isSpeaking && speakingText === line ? (
+                            <VolumeX size={18} className="text-muted-foreground" />
+                          ) : (
+                            <Volume2 size={18} className="text-muted-foreground" />
+                          )}
+                        </button>
                         <div className={commonTextClass}>
                           {renderLine(line, `${activeTab}-closing`, idx, matchOffset, false, true)}
                         </div>
@@ -2830,8 +2948,21 @@ const collectPolicyDetailInputIds = (
                     const matchOffset = closingLineOffsets.get(idx) ?? 0;
                     
                     return (
-                      <div key={idx} className={commonTextClass}>
-                        {renderLine(line, `${activeTab}-closing`, idx, matchOffset, false, true)}
+                      <div key={idx} className="relative group">
+                        <button
+                          onClick={() => handleSpeak(line)}
+                          className="absolute -top-2 -right-2 p-2 hover:bg-secondary rounded-lg transition-colors opacity-0 group-hover:opacity-100 z-10"
+                          aria-label="읽기"
+                        >
+                          {isSpeaking && speakingText === line ? (
+                            <VolumeX size={16} className="text-muted-foreground" />
+                          ) : (
+                            <Volume2 size={16} className="text-muted-foreground" />
+                          )}
+                        </button>
+                        <div className={commonTextClass}>
+                          {renderLine(line, `${activeTab}-closing`, idx, matchOffset, false, true)}
+                        </div>
                       </div>
                     );
                   })}
