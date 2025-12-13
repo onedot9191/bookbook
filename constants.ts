@@ -558,6 +558,31 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "",
       "[See you next time]! [Bye]~"
     ]
+  },
+  {
+    id: 'interview',
+    title: '면접',
+    content: [
+      "서론:",
+      "",
+      "[Nowadays] (주제) [plays an important role] [in English education].",
+      "",
+      "1) [This is because] [it has several advantages].",
+      "",
+      "2) [However], [it has several disadvantages].",
+      "",
+      "[I'm going to tell you] (내용).",
+      "",
+      "본론:",
+      "",
+      "First, _______. [For example], _______.",
+      "",
+      "Second, _______. [For example], _______.",
+      "",
+      "결론:",
+      "",
+      "[If the teacher makes good use of] (내용), [students will be able to learn English effectively]."
+    ]
   }
 ];
 
