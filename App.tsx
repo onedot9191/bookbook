@@ -785,8 +785,8 @@ const App: React.FC = () => {
     const inputVal = currentState.value.trim();
     const correctVal = currentState.answer;
 
-    // 정규화 함수: 띄어쓰기, · 기호, 반점(쉼표) 제거 후 소문자로 변환
-    const normalize = (str: string) => str.replace(/\s+/g, '').replace(/·/g, '').replace(/,/g, '').toLowerCase();
+    // 정규화 함수: 띄어쓰기, · 기호, 반점(쉼표), 작은따옴표 제거 후 소문자로 변환
+    const normalize = (str: string) => str.replace(/\s+/g, '').replace(/·/g, '').replace(/,/g, '').replace(/'/g, '').toLowerCase();
     
     const normalizedInput = normalize(inputVal);
     const normalizedAnswer = normalize(correctVal);
@@ -1586,10 +1586,7 @@ const collectPolicyDetailInputIds = (
       // 수집한 매치들을 처리
       matches.forEach((match, matchIdx) => {
         if (match.index > lastIndex) {
-          const textBeforeMatch = line.substring(lastIndex, match.index);
-          if (textBeforeMatch) {
-            parts.push(<span key={`text-${lineIndex}-${matchIdx}`}>{textBeforeMatch}</span>);
-          }
+          parts.push(line.substring(lastIndex, match.index));
         }
 
       // secIdx가 문자열이고 policy-detail로 시작하는 경우 그대로 사용, 아니면 일반 형식 사용
@@ -1668,10 +1665,7 @@ const collectPolicyDetailInputIds = (
       });
 
       if (lastIndex < line.length) {
-        const remainingText = line.substring(lastIndex);
-        if (remainingText) {
-          parts.push(<span key={`text-${lineIndex}-end`}>{remainingText}</span>);
-        }
+        parts.push(line.substring(lastIndex));
       }
       
       allParts.push(...parts);
@@ -2579,10 +2573,10 @@ const collectPolicyDetailInputIds = (
       if (!section.skillCategories) return null;
 
       const skillColors: Record<string, { bg: string; border: string; text: string; icon: string; cardBg: string; cardText: string }> = {
-        listening: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800', icon: '👂', cardBg: 'bg-blue-50', cardText: 'text-slate-800' },
-        speaking: { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-800', icon: '🗣️', cardBg: 'bg-green-50', cardText: 'text-slate-800' },
-        reading: { bg: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-800', icon: '📖', cardBg: 'bg-amber-50', cardText: 'text-slate-800' },
-        writing: { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-800', icon: '✏️', cardBg: 'bg-purple-50', cardText: 'text-slate-800' }
+        listening: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800', icon: '👂', cardBg: 'bg-blue-50', cardText: 'text-slate-800 dark:text-slate-200' },
+        speaking: { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-800', icon: '🗣️', cardBg: 'bg-green-50', cardText: 'text-slate-800 dark:text-slate-200' },
+        reading: { bg: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-800', icon: '📖', cardBg: 'bg-amber-50', cardText: 'text-slate-800 dark:text-slate-200' },
+        writing: { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-800', icon: '✏️', cardBg: 'bg-purple-50', cardText: 'text-slate-800 dark:text-slate-200' }
       };
 
       const currentSkillCategory = section.skillCategories.find(cat => cat.id === activeSkillTab);
@@ -2852,18 +2846,7 @@ const collectPolicyDetailInputIds = (
                           return (
                             <div 
                               key={lineIdx} 
-                              className={`text-lg leading-relaxed ${colors.cardText} font-medium 
-                                [&_input]:text-slate-800 
-                                [&_input]:border-slate-300 
-                                [&_input]:placeholder:text-slate-400
-                                [&_input]:bg-white
-                                [&_input.border-emerald-500]:!bg-emerald-100
-                                [&_input.border-emerald-500]:!text-emerald-700
-                                [&_input.border-orange-500]:!bg-orange-50
-                                [&_input.border-destructive]:!bg-red-200
-                                [&_input.border-destructive]:!text-red-800
-                                [&_input.bg-red-500\\/15]:!bg-red-100
-                              `}
+                              className={`text-lg leading-relaxed ${colors.cardText} font-medium`}
                             >
                               {renderLine(line, activitySecIdx, lineIdx, matchOffset, false, true)}
                             </div>
