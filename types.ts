@@ -41,10 +41,17 @@ export interface EnglishDemoSectionData {
   closingContent?: string[];  // 하단 마무리 콘텐츠 (도입의 학습문제 확인, Activity 3의 활동 마무리 등)
 }
 
+// 표 데이터 타입
+export interface TableData {
+  headers: string[];
+  rows: string[][];
+}
+
 // 계층 구조 데이터 타입
 export interface HierarchyItem {
   title: string;
   children?: HierarchyItem[];
+  table?: TableData;
 }
 
 export interface PolicyDetailData {
