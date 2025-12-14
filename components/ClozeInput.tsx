@@ -8,6 +8,7 @@ interface ClozeInputProps {
   onSubmit: (id: string) => void;
   onFocusRequest: (id: string) => void;
   isEnglishMode?: boolean; // 영어수업실연 답안틀용 좁은 너비
+  isCompact?: boolean; // 표 안에서 사용하는 컴팩트 모드
 }
 
 export const ClozeInput: React.FC<ClozeInputProps> = ({
@@ -17,6 +18,7 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
   onSubmit,
   onFocusRequest,
   isEnglishMode = false,
+  isCompact = false,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const prevStatusRef = useRef<string>(state.status);
@@ -26,8 +28,20 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
   
   // 영어 모드: 영문 답안은 한글보다 좁게 (ch 단위 기준 더 타이트)
   // 한글 모드: 기존 로직 유지
+  // 컴팩트 모드: 더 작은 크기
   let multiplier;
-  if (isEnglishMode) {
+  if (isCompact) {
+    // 컴팩트: 표 안에서 사용할 크기
+    if (contentLength >= 15) {
+      multiplier = 0.85;
+    } else if (contentLength >= 10) {
+      multiplier = 0.9;
+    } else if (contentLength >= 6) {
+      multiplier = 0.95;
+    } else {
+      multiplier = 1.0;
+    }
+  } else if (isEnglishMode) {
     // 영어: 한글보다 약간 좁은 너비 적용
     if (contentLength >= 15) {
       multiplier = 0.63;
@@ -51,11 +65,11 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
     }
   }
   
-  const calculatedWidth = contentLength * multiplier + (isEnglishMode ? 0.58 : 0.8);
+  const calculatedWidth = contentLength * multiplier + (isCompact ? 1.0 : isEnglishMode ? 0.58 : 0.8);
   
   const widthStyle = {
     width: `${calculatedWidth}em`,
-    minWidth: isEnglishMode ? '2.3em' : '3em',
+    minWidth: isCompact ? '3.5em' : isEnglishMode ? '2.3em' : '3em',
   };
 
   // Effect: Handle focus and shake animation reset
@@ -115,10 +129,10 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
       onFocus={() => onFocusRequest(state.id)}
       autoComplete="off"
       className={`
-        inline-block mx-1 my-1 px-2 py-1 text-center outline-none border-b-4 rounded-lg
+        inline-block text-center outline-none border-b-4 rounded-lg
         transition-all duration-200 align-baseline shadow-md
-        text-[1.6rem] leading-normal
         disabled:opacity-100 disabled:cursor-not-allowed
+        ${isCompact ? 'mx-0.5 my-0.5 px-2 py-1 text-base leading-normal border-b-2 rounded-md' : 'mx-1 my-1 px-2 py-1 text-[1.6rem] leading-normal'}
         ${bgClass}
         ${statusClasses}
       `}
