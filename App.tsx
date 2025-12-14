@@ -369,7 +369,7 @@ const App: React.FC = () => {
 
     // Parse Policy Details Hierarchy
     POLICY_DETAILS.forEach((policyDetail, policyIdx) => {
-      const parseHierarchyItem = (item: { title: string; children?: any[] }, path: string) => {
+      const parseHierarchyItem = (item: { title: string; children?: any[]; table?: { headers: string[]; rows: string[][] } }, path: string) => {
         const regex = /\[(.*?)\]/g;
         let match;
         let matchCount = 0;
@@ -385,6 +385,30 @@ const App: React.FC = () => {
             answer: answer.trim(),
           };
           matchCount++;
+        }
+        
+        // Parse table cells if exists
+        if (item.table) {
+          item.table.rows.forEach((row, rIdx) => {
+            row.forEach((cell, cIdx) => {
+              const cellRegex = /\[(.*?)\]/g;
+              let cellMatch;
+              let cellMatchCount = 0;
+              while ((cellMatch = cellRegex.exec(cell)) !== null) {
+                const answer = cellMatch[1];
+                const id = `policy-detail-${policyIdx}-${path}-table-${rIdx}-${cIdx}-${cellMatchCount}`;
+                initialStates[id] = {
+                  id,
+                  value: '',
+                  status: 'idle',
+                  attempts: 0,
+                  disabled: false,
+                  answer: answer.trim(),
+                };
+                cellMatchCount++;
+              }
+            });
+          });
         }
         
         if (item.children) {
@@ -671,11 +695,25 @@ const App: React.FC = () => {
             const selectedItem = policyDetail.hierarchy[activePolicyTab];
             
             // parseHierarchyItem과 동일한 경로 계산
-            const collectInputs = (item: { title: string; children?: any[] }, path: string) => {
+            const collectInputs = (item: { title: string; children?: any[]; table?: { headers: string[]; rows: string[][] } }, path: string) => {
                 const matches = item.title.match(/\[(.*?)\]/g);
                 if (matches) {
                     matches.forEach((_, matchIdx) => {
                         currentInputs.push(`policy-detail-${policyDetailIdx}-${path}-${matchIdx}`);
+                    });
+                }
+                
+                // Collect table cell input IDs
+                if (item.table) {
+                    item.table.rows.forEach((row, rIdx) => {
+                        row.forEach((cell, cIdx) => {
+                            const cellMatches = cell.match(/\[(.*?)\]/g);
+                            if (cellMatches) {
+                                cellMatches.forEach((_, matchIdx) => {
+                                    currentInputs.push(`policy-detail-${policyDetailIdx}-${path}-table-${rIdx}-${cIdx}-${matchIdx}`);
+                                });
+                            }
+                        });
                     });
                 }
                 
@@ -1039,11 +1077,25 @@ const collectPolicyDetailInputIds = (
 ): string[] => {
   const ids: string[] = [];
 
-  const traverse = (item: { title: string; children?: any[] }, path: string) => {
+  const traverse = (item: { title: string; children?: any[]; table?: { headers: string[]; rows: string[][] } }, path: string) => {
     const matches = item.title.match(/\[(.*?)\]/g);
     if (matches) {
       matches.forEach((_, matchIdx) => {
         ids.push(`policy-detail-${policyDetailIdx}-${path}-${matchIdx}`);
+      });
+    }
+
+    // Collect table cell input IDs
+    if (item.table) {
+      item.table.rows.forEach((row, rIdx) => {
+        row.forEach((cell, cIdx) => {
+          const cellMatches = cell.match(/\[(.*?)\]/g);
+          if (cellMatches) {
+            cellMatches.forEach((_, matchIdx) => {
+              ids.push(`policy-detail-${policyDetailIdx}-${path}-table-${rIdx}-${cIdx}-${matchIdx}`);
+            });
+          }
+        });
       });
     }
 
@@ -1557,7 +1609,7 @@ const collectPolicyDetailInputIds = (
 
   // --- Render Helpers ---
 
-  const renderLine = (text: string, secIdx: number | string, lineIdx: number, matchOffset: number = 0, isInterview: boolean = false, isEnglishDemo: boolean = false, isPolicy: boolean = false) => {
+  const renderLine = (text: string, secIdx: number | string, lineIdx: number, matchOffset: number = 0, isInterview: boolean = false, isEnglishDemo: boolean = false, isPolicy: boolean = false, isCompact: boolean = false) => {
     // <br> 태그를 기준으로 텍스트를 분할
     const lines = text.split(/<br\s*\/?>/i);
     const allParts: React.ReactNode[] = [];
@@ -1634,6 +1686,7 @@ const collectPolicyDetailInputIds = (
             onSubmit={handleValidate}
             onFocusRequest={() => {}}
             isEnglishMode={isEnglishDemo}
+            isCompact={isCompact}
           />
         );
       } else {
@@ -1655,6 +1708,7 @@ const collectPolicyDetailInputIds = (
               onSubmit={handleValidate}
               onFocusRequest={() => {}}
               isEnglishMode={isEnglishDemo}
+              isCompact={isCompact}
             />
           );
       }
@@ -2231,9 +2285,42 @@ const collectPolicyDetailInputIds = (
                       </div>
                     </div>
                     {/* 콘텐츠 */}
-                    {hasChildren && (
+                    {(hasChildren || item.table) && (
                       <div className="bg-card/50 p-6 border-t border-border/50">
-                        {renderHierarchy(item.children, level + 1, itemPath)}
+                        {/* 표 렌더링 */}
+                        {item.table && (
+                          <div className="overflow-x-auto mb-4">
+                            <table className="w-full border-collapse text-sm">
+                              <thead>
+                                <tr>
+                                  {item.table.headers.map((header, hIdx) => (
+                                    <th 
+                                      key={hIdx} 
+                                      className={`bg-primary/20 text-primary font-bold px-2 py-1.5 text-center border border-border/50 first:rounded-tl-lg last:rounded-tr-lg ${hIdx === 0 ? 'w-[15%]' : hIdx === 1 ? 'w-[40%]' : 'w-[45%]'}`}
+                                    >
+                                      {header}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {item.table.rows.map((row, rIdx) => (
+                                  <tr key={rIdx} className={rIdx % 2 === 0 ? 'bg-card/30' : 'bg-card/50'}>
+                                    {row.map((cell, cIdx) => (
+                                      <td 
+                                        key={cIdx} 
+                                        className={`px-2 py-1 border border-border/50 align-middle ${cIdx === 0 ? 'font-semibold text-amber-400 bg-amber-500/10 text-center' : cIdx === 1 ? 'text-foreground text-center' : 'text-emerald-400'}`}
+                                      >
+                                        {renderLine(cell, `policy-detail-${policyDetailIdx}-${itemPath}-table-${rIdx}-${cIdx}`, 0, 0, false, false, true, true)}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                        {hasChildren && renderHierarchy(item.children, level + 1, itemPath)}
                       </div>
                     )}
                   </div>
