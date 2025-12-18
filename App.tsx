@@ -2614,14 +2614,16 @@ const collectPolicyDetailInputIds = (
       return (
         <div className="space-y-6">
           {section.content.map((line, idx) => {
-            const matchOffset = lineOffsets.get(idx) ?? 0;
+            // 각 줄에서 matchCount는 0부터 시작 (parseAndInitContent와 동일하게)
+            const matchOffset = 0;
             
-            // 헤더 라인인 경우 스타일링 (콜론으로 끝나는 경우)
-            if (line.trim().endsWith(':') && !line.includes('[')) {
+            // 헤더 라인인 경우 스타일링 (#으로 시작하거나 콜론으로 끝나는 경우)
+            if ((line.trim().startsWith('#') || (line.trim().endsWith(':') && !line.includes('[')))) {
+              const headerText = line.trim().startsWith('#') ? line.trim().substring(1) : line;
               return (
                 <div key={idx} className="mt-8 mb-4">
                   <h3 className="text-2xl md:text-3xl font-bold text-primary border-b-2 border-primary/30 pb-2">
-                    {line}
+                    {headerText}
                   </h3>
                 </div>
               );
@@ -2660,10 +2662,10 @@ const collectPolicyDetailInputIds = (
       if (!section.skillCategories) return null;
 
       const skillColors: Record<string, { bg: string; border: string; text: string; icon: string; cardBg: string; cardText: string }> = {
-        listening: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800', icon: '👂', cardBg: 'bg-blue-50', cardText: 'text-slate-800 dark:text-slate-200' },
-        speaking: { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-800', icon: '🗣️', cardBg: 'bg-green-50', cardText: 'text-slate-800 dark:text-slate-200' },
-        reading: { bg: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-800', icon: '📖', cardBg: 'bg-amber-50', cardText: 'text-slate-800 dark:text-slate-200' },
-        writing: { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-800', icon: '✏️', cardBg: 'bg-purple-50', cardText: 'text-slate-800 dark:text-slate-200' }
+        listening: { bg: 'bg-[hsl(var(--card))]', border: 'border-blue-400', text: 'text-blue-800', icon: '👂', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
+        speaking: { bg: 'bg-[hsl(var(--card))]', border: 'border-green-400', text: 'text-green-800', icon: '🗣️', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
+        reading: { bg: 'bg-[var(--card)]', border: 'border-amber-400', text: 'text-amber-800', icon: '📖', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
+        writing: { bg: 'bg-[hsl(var(--card))]', border: 'border-purple-400', text: 'text-purple-800', icon: '✏️', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' }
       };
 
       const currentSkillCategory = section.skillCategories.find(cat => cat.id === activeSkillTab);
@@ -2688,80 +2690,242 @@ const collectPolicyDetailInputIds = (
                 }
               });
 
-              // 편지글 시작 인덱스 찾기 ("Hello, everyone" 포함된 라인부터)
-              const letterStartIndex = section.content.findIndex(line => 
-                line.includes("Hello, everyone") && line.includes("I have a problem")
+              // 동기유발 섹션 인덱스 찾기
+              const motivationIndex = section.content.findIndex(line => 
+                line.trim() === "동기유발:"
+              );
+              
+              // 배움문제 및 활동 안내 섹션 인덱스 찾기
+              const activityGuideIndex = section.content.findIndex(line => 
+                line.trim() === "배움문제 및 활동 안내:"
               );
 
-              return (
-                <div className="space-y-6 mb-8">
-                  {section.content.map((line, idx) => {
-                    const matchOffset = lineOffsets.get(idx) ?? 0;
-                    const isLetterContent = letterStartIndex !== -1 && idx >= letterStartIndex;
-                    
-                    // 헤더 라인인 경우 스타일링 (콜론으로 끝나는 경우)
-                    if (line.trim().endsWith(':') && !line.includes('[')) {
-                      return (
-                        <div key={idx} className="mt-8 mb-4">
-                          <h3 className="text-2xl md:text-3xl font-bold text-primary border-b-2 border-primary/30 pb-2">
-                            {line}
-                          </h3>
+              // 편지글 인덱스 찾기 (편지 내용 라인 찾기 - "Hi, everyone" 또는 "Hello, everyone"과 "Ellen" 또는 "problem"을 포함하는 라인)
+              const letterIndex = section.content.findIndex(line => 
+                (line.includes("Hi, everyone") || line.includes("Hello, everyone")) && 
+                (line.includes("Ellen") || line.includes("problem") || line.includes("I have a new friend") || line.includes("I have a problem"))
+              );
+
+              const renderContentLine = (line: string, idx: number) => {
+                // 각 줄에서 matchCount는 0부터 시작 (parseAndInitContent와 동일하게)
+                const matchOffset = 0;
+                const isLetterContent = letterIndex >= 0 && idx === letterIndex;
+                
+                // 헤더 라인인 경우 스타일링 (#으로 시작하거나 콜론으로 끝나는 경우)
+                if ((line.trim().startsWith('#') || (line.trim().endsWith(':') && !line.includes('[')))) {
+                  const headerText = line.trim().startsWith('#') ? line.trim().substring(1) : line;
+                  return (
+                    <div key={idx} className="mt-8 mb-4">
+                      <h3 className="text-2xl md:text-3xl font-bold text-primary border-b-2 border-primary/30 pb-2">
+                        {headerText}
+                      </h3>
+                    </div>
+                  );
+                }
+                
+                // 빈 줄인 경우
+                if (!line.trim()) {
+                  return <div key={idx} className="h-4" />;
+                }
+                
+                // 편지글 내용인 경우 특별한 스타일 적용
+                if (isLetterContent) {
+                  return (
+                    <div key={idx} className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 p-8 rounded-3xl border-2 border-pink-300 dark:border-pink-700 shadow-md">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl">✉️</span>
+                          <span className="text-sm font-semibold text-pink-700 dark:text-pink-300 uppercase tracking-wide">편지 내용</span>
                         </div>
-                      );
-                    }
-                    
-                    // 빈 줄인 경우
-                    if (!line.trim()) {
-                      return <div key={idx} className="h-4" />;
-                    }
-                    
-                    // 편지글 내용인 경우 특별한 스타일 적용
-                    if (isLetterContent) {
-                      return (
-                        <div key={idx} className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 p-8 rounded-3xl border-2 border-pink-300 dark:border-pink-700 shadow-md">
-                          <div className="flex items-start justify-between gap-3 mb-2">
-                            <div className="flex items-start gap-3">
-                              <span className="text-2xl">✉️</span>
-                              <span className="text-sm font-semibold text-pink-700 dark:text-pink-300 uppercase tracking-wide">편지 내용</span>
-                            </div>
-                            <button
-                              onClick={() => handleSpeak(line)}
-                              className="p-2 hover:bg-pink-200 dark:hover:bg-pink-800 rounded-lg transition-colors"
-                              aria-label="읽기"
-                            >
-                              {isSpeaking && speakingText === line ? (
-                                <VolumeX size={18} className="text-pink-700 dark:text-pink-300" />
-                              ) : (
-                                <Volume2 size={18} className="text-pink-700 dark:text-pink-300" />
-                              )}
-                            </button>
-                          </div>
-                          <div className={commonTextClass}>
-                            {renderLine(line, activeTab, idx, matchOffset, false, true)}
-                          </div>
-                        </div>
-                      );
-                    }
-                    
-                    return (
-                      <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md relative group">
                         <button
                           onClick={() => handleSpeak(line)}
-                          className="absolute top-4 right-4 p-2 hover:bg-secondary rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                          className="p-2 hover:bg-pink-200 dark:hover:bg-pink-800 rounded-lg transition-colors"
                           aria-label="읽기"
                         >
                           {isSpeaking && speakingText === line ? (
-                            <VolumeX size={18} className="text-muted-foreground" />
+                            <VolumeX size={18} className="text-pink-700 dark:text-pink-300" />
                           ) : (
-                            <Volume2 size={18} className="text-muted-foreground" />
+                            <Volume2 size={18} className="text-pink-700 dark:text-pink-300" />
                           )}
                         </button>
-                        <div className={commonTextClass}>
-                          {renderLine(line, activeTab, idx, matchOffset, false, true)}
-                        </div>
                       </div>
-                    );
-                  })}
+                      <div className={commonTextClass}>
+                        {renderLine(line, activeTab, idx, matchOffset, false, true)}
+                      </div>
+                      
+                      {/* 편지 내용의 일부로 4가지 기능별 하위범주 표시 */}
+                      {section.skillCategories && section.skillCategories.length > 0 && (() => {
+                        const skillColors: Record<string, { bg: string; border: string; text: string; icon: string; cardBg: string; cardText: string }> = {
+                          listening: { bg: 'bg-[hsl(var(--card))]', border: 'border-blue-400', text: 'text-blue-800', icon: '👂', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
+                          speaking: { bg: 'bg-[hsl(var(--card))]', border: 'border-green-400', text: 'text-green-800', icon: '🗣️', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
+                          reading: { bg: 'bg-[var(--card)]', border: 'border-amber-400', text: 'text-amber-800', icon: '📖', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
+                          writing: { bg: 'bg-[hsl(var(--card))]', border: 'border-purple-400', text: 'text-purple-800', icon: '✏️', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' }
+                        };
+
+                        const currentSkillCategory = section.skillCategories.find(cat => cat.id === activeSkillTab);
+                        const effectiveSkillCategory = currentSkillCategory || section.skillCategories[0];
+
+                        return (
+                          <div className="mt-6 pt-6 border-t-2 border-pink-300 dark:border-pink-700">
+                            {/* 기능별 서브탭 */}
+                            <div className={`grid gap-2 mb-6 ${section.skillCategories.length <= 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'}`}>
+                              {section.skillCategories.map((category) => {
+                                const colors = skillColors[category.id] || skillColors.listening;
+                                const isActive = activeSkillTab === category.id || (section.skillCategories!.length <= 2 && section.skillCategories![0].id === category.id && !currentSkillCategory);
+                                
+                                return (
+                                  <button
+                                    key={category.id}
+                                    onClick={() => setActiveSkillTab(category.id)}
+                                    className={`
+                                      relative p-2 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-1
+                                      ${isActive 
+                                        ? `${colors.bg} ${colors.border} ${colors.text} shadow-md scale-105` 
+                                        : 'bg-white/50 dark:bg-pink-900/20 border-pink-300 dark:border-pink-700 text-muted-foreground hover:border-pink-400 dark:hover:border-pink-600 hover:bg-white/70 dark:hover:bg-pink-900/30'}
+                                    `}
+                                  >
+                                    <span className="text-xl">{category.icon || colors.icon}</span>
+                                    <span className="font-semibold text-sm">{category.title}</span>
+                                    {isActive && (
+                                      <div className={`absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-3 h-3 rotate-45 ${colors.bg} ${colors.border} border-t-0 border-l-0`} />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* 선택된 기능의 활동 카드들 */}
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                              <div className={`grid gap-6 ${effectiveSkillCategory.activities.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
+                                {effectiveSkillCategory.activities.map((activity, activityIdx) => {
+                                  const colors = skillColors[effectiveSkillCategory.id] || skillColors.listening;
+                                  
+                                  // 활동 카드 내 라인별 matchOffset 계산
+                                  let activityMatchOffset = 0;
+                                  const activityLineOffsets: Map<number, number> = new Map();
+                                  
+                                  activity.content.forEach((line, lineIdx) => {
+                                    activityLineOffsets.set(lineIdx, activityMatchOffset);
+                                    const matches = line.match(/\[(.*?)\]/g);
+                                    if (matches) {
+                                      activityMatchOffset += matches.length;
+                                    }
+                                  });
+
+                                  // 활동 카드용 고유 secIdx 생성 (탭-스킬-활동)
+                                  const activitySecIdx = `${activeTab}-${effectiveSkillCategory.id}-${activity.id}`;
+                                  
+                                  return (
+                                    <div 
+                                      key={activity.id}
+                                      className={`
+                                        ${colors.cardBg} ${colors.border} border-2
+                                        rounded-3xl p-6 shadow-md
+                                        hover:shadow-lg transition-shadow duration-300
+                                      `}
+                                    >
+                                      {/* 활동 카드 헤더 */}
+                                      <div className={`flex items-center justify-between gap-3 mb-4 pb-3 border-b ${colors.border}`}>
+                                        <div className="flex items-center gap-3">
+                                          <span className="text-2xl">{effectiveSkillCategory?.icon || colors.icon}</span>
+                                          <h4 className={`text-xl font-bold ${colors.text}`}>
+                                            ●{activity.title}
+                                          </h4>
+                                        </div>
+                                        {/* 활동 카드 내용 전체를 읽기 위한 스피커 버튼 */}
+                                        <button
+                                          onClick={() => {
+                                            const allText = activity.content.join(' ');
+                                            handleSpeak(allText);
+                                          }}
+                                          className={`p-2 rounded-lg transition-colors hover:bg-white/50 dark:hover:bg-black/20`}
+                                          aria-label="읽기"
+                                        >
+                                          {isSpeaking && speakingText === activity.content.join(' ') ? (
+                                            <VolumeX size={18} className={colors.text} />
+                                          ) : (
+                                            <Volume2 size={18} className={colors.text} />
+                                          )}
+                                        </button>
+                                      </div>
+                                      
+                                      {/* 활동 카드 내용 */}
+                                      <div className="space-y-3">
+                                        {activity.content.map((line, lineIdx) => {
+                                          const matchOffset = activityLineOffsets.get(lineIdx) ?? 0;
+                                          
+                                          // 빈 줄인 경우
+                                          if (!line.trim()) {
+                                            return <div key={lineIdx} className="h-3" />;
+                                          }
+                                          
+                                          return (
+                                            <div 
+                                              key={lineIdx} 
+                                              className={`text-[1.9rem] leading-[4rem] ${colors.cardText} font-medium break-keep tracking-wide`}
+                                            >
+                                              {renderLine(line, activitySecIdx, lineIdx, matchOffset, false, true)}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md relative group">
+                    <button
+                      onClick={() => handleSpeak(line)}
+                      className="absolute top-4 right-4 p-2 hover:bg-secondary rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                      aria-label="읽기"
+                    >
+                      {isSpeaking && speakingText === line ? (
+                        <VolumeX size={18} className="text-muted-foreground" />
+                      ) : (
+                        <Volume2 size={18} className="text-muted-foreground" />
+                      )}
+                    </button>
+                    <div className={commonTextClass}>
+                      {renderLine(line, activeTab, idx, matchOffset, false, true)}
+                    </div>
+                  </div>
+                );
+              };
+
+              return (
+                <div className="space-y-6 mb-8">
+                  {/* 동기유발 섹션 이전 내용 */}
+                  {section.content.slice(0, motivationIndex >= 0 ? motivationIndex : section.content.length).map((line, idx) => 
+                    renderContentLine(line, idx)
+                  )}
+                  
+                  {/* 동기유발 섹션 */}
+                  {motivationIndex >= 0 && (
+                    <>
+                      {section.content.slice(motivationIndex, activityGuideIndex >= 0 ? activityGuideIndex : section.content.length).map((line, idx) => {
+                        const actualIdx = motivationIndex + idx;
+                        return renderContentLine(line, actualIdx);
+                      })}
+                    </>
+                  )}
+                  
+                  {/* 배움문제 및 활동 안내 섹션 이후 내용 */}
+                  {activityGuideIndex >= 0 && (
+                    <>
+                      {section.content.slice(activityGuideIndex).map((line, idx) => 
+                        renderContentLine(line, activityGuideIndex + idx)
+                      )}
+                    </>
+                  )}
                 </div>
               );
             }
@@ -2769,24 +2933,15 @@ const collectPolicyDetailInputIds = (
             // Activity 1, 2, 3의 경우 기존 스타일 유지
             return (
               <div className="bg-card p-8 rounded-3xl border border-border shadow-md mb-8">
-                {/* 섹션별 헤더 */}
-                {section.id === 'activity3' && (
-                  <h3 className="text-2xl font-bold text-primary mb-4 border-b-2 border-primary/30 pb-2">활동 소개</h3>
-                )}
-                {section.id === 'activity2' && (
-                  <h3 className="text-2xl font-bold text-primary mb-4 border-b-2 border-primary/30 pb-2">활동 소개</h3>
-                )}
-                {section.id === 'activity1' && (
-                  <h3 className="text-2xl font-bold text-primary mb-4 border-b-2 border-primary/30 pb-2">활동 소개</h3>
-                )}
                 <div className="space-y-4">
                   {section.content.map((line, idx) => {
-                    // 헤더 라인인 경우 스타일링 (콜론으로 끝나고 대괄호가 없는 경우)
-                    if (line.trim().endsWith(':') && !line.includes('[')) {
+                    // 헤더 라인인 경우 스타일링 (#으로 시작하거나 콜론으로 끝나고 대괄호가 없는 경우)
+                    if ((line.trim().startsWith('#') || (line.trim().endsWith(':') && !line.includes('[')))) {
+                      const headerText = line.trim().startsWith('#') ? line.trim().substring(1) : line;
                       return (
                         <div key={idx} className="mt-6 mb-2">
                           <h3 className="text-2xl md:text-3xl font-bold text-primary border-b-2 border-primary/30 pb-2">
-                            {line}
+                            {headerText}
                           </h3>
                         </div>
                       );
@@ -2824,8 +2979,9 @@ const collectPolicyDetailInputIds = (
             );
           })()}
 
-          {/* 기능별 서브탭 */}
-          <div className={`grid gap-3 mb-8 ${section.skillCategories.length <= 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'}`}>
+          {/* 기능별 서브탭 - 도입 섹션은 편지 내용 바로 다음에 표시되므로 여기서는 제외 */}
+          {section.id !== 'introduction' && (
+            <div className={`grid gap-3 mb-8 ${section.skillCategories.length <= 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'}`}>
             {section.skillCategories.map((category) => {
               const colors = skillColors[category.id] || skillColors.listening;
               const isActive = activeSkillTab === category.id || (section.skillCategories!.length <= 2 && section.skillCategories![0].id === category.id && !currentSkillCategory);
@@ -2835,25 +2991,25 @@ const collectPolicyDetailInputIds = (
                   key={category.id}
                   onClick={() => setActiveSkillTab(category.id)}
                   className={`
-                    relative p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-2
+                    relative p-3 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-1
                     ${isActive 
                       ? `${colors.bg} ${colors.border} ${colors.text} shadow-lg scale-105` 
                       : 'bg-card border-border text-muted-foreground hover:border-primary/30 hover:bg-secondary/50'}
                   `}
                 >
-                  <span className="text-3xl">{category.icon || colors.icon}</span>
-                  <span className="font-bold text-lg">{category.title}</span>
-                  <span className="text-xs opacity-70">{category.activities.length}개 활동</span>
+                  <span className="text-2xl">{category.icon || colors.icon}</span>
+                  <span className="font-bold text-base">{category.title}</span>
                   {isActive && (
                     <div className={`absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-4 h-4 rotate-45 ${colors.bg} ${colors.border} border-t-0 border-l-0`} />
                   )}
                 </button>
               );
             })}
-          </div>
+            </div>
+          )}
 
-          {/* 선택된 기능의 활동 카드들 */}
-          {effectiveSkillCategory && (
+          {/* 선택된 기능의 활동 카드들 - 도입 섹션은 편지 내용 바로 다음에 표시되므로 여기서는 제외 */}
+          {section.id !== 'introduction' && effectiveSkillCategory && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className={`grid gap-6 ${effectiveSkillCategory.activities.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
                 {effectiveSkillCategory.activities.map((activity, activityIdx) => {
@@ -2933,7 +3089,7 @@ const collectPolicyDetailInputIds = (
                           return (
                             <div 
                               key={lineIdx} 
-                              className={`text-lg leading-relaxed ${colors.cardText} font-medium`}
+                              className={`text-[1.9rem] leading-[4rem] ${colors.cardText} font-medium break-keep tracking-wide`}
                             >
                               {renderLine(line, activitySecIdx, lineIdx, matchOffset, false, true)}
                             </div>
@@ -2965,12 +3121,13 @@ const collectPolicyDetailInputIds = (
                   {section.closingContent.map((line, idx) => {
                     const matchOffset = closingLineOffsets.get(idx) ?? 0;
                     
-                    // 헤더 라인인 경우 스타일링 (콜론으로 끝나는 경우)
-                    if (line.trim().endsWith(':') && !line.includes('[')) {
+                    // 헤더 라인인 경우 스타일링 (#으로 시작하거나 콜론으로 끝나는 경우)
+                    if ((line.trim().startsWith('#') || (line.trim().endsWith(':') && !line.includes('[')))) {
+                      const headerText = line.trim().startsWith('#') ? line.trim().substring(1) : line;
                       return (
                         <div key={idx} className="mt-8 mb-4">
                           <h3 className="text-2xl md:text-3xl font-bold text-primary border-b-2 border-primary/30 pb-2">
-                            {line}
+                            {headerText}
                           </h3>
                         </div>
                       );
@@ -3009,12 +3166,13 @@ const collectPolicyDetailInputIds = (
               <div className="bg-card p-8 rounded-3xl border border-border shadow-md mt-8">
                 <div className="space-y-4">
                   {section.closingContent.map((line, idx) => {
-                    // 헤더 라인인 경우 스타일링
-                    if (line.trim().endsWith(':') && !line.includes('[')) {
+                    // 헤더 라인인 경우 스타일링 (#으로 시작하거나 콜론으로 끝나는 경우)
+                    if ((line.trim().startsWith('#') || (line.trim().endsWith(':') && !line.includes('[')))) {
+                      const headerText = line.trim().startsWith('#') ? line.trim().substring(1) : line;
                       return (
                         <div key={idx} className="mt-6 mb-2">
                           <h3 className="text-2xl md:text-3xl font-bold text-primary border-b-2 border-primary/30 pb-2">
-                            {line}
+                            {headerText}
                           </h3>
                         </div>
                       );
@@ -3286,7 +3444,8 @@ const collectPolicyDetailInputIds = (
                 <div className="space-y-6">
                   {block.content.map((lineData, lineIdx) => {
                     const actualLineIdx = lineData.originalIdx;
-                    const matchOffset = lineOffsets.get(actualLineIdx) ?? 0;
+                    // 각 줄에서 matchCount는 0부터 시작 (parseAndInitContent와 동일하게)
+                    const matchOffset = 0;
                     
                     return (
                       <div key={lineIdx} className={`${commonTextClass} py-2`}>
