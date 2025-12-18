@@ -127,27 +127,39 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "인사:",
       "",
-      "[Hello, everyone]. [How are you feeling today]?",
+      "[Hi, everyone]! [How are you today]?",
       "",
-      "[Oh good]! [I feel great, too].",
+      "[Good]? [Great]? [I'm happy, too]!",
       "",
-      "전시학습 상기:",
+      "[Is everyone here]? [One, two, three...] <br> [Yes]! [All] (학생 수) [students are here].",
       "",
-      "[Ok], [then let's review last class].",
+      "[Are you ready]? [Let's start]!",
       "",
-      "[Do you remember] [what we learned last time]? 짱구?",
+      "전시학습:",
       "",
-      "[Yes], [You remember last lesson] [very well]~!",
+      "[Let's review]. [Do you remember yesterday]?",
+      "",
+      "[What did we learn]? (잠시 대기) [Very good]! [You remember everything]!",
       "",
       "동기유발:",
       "",
-      "[Someone gives me a letter].",
+      "[Look! I have a letter]. (편지 봉투를 보여주며)",
       "",
-      "Oh, [도비's letter].",
+      "[It's from Dobby]. [He has a problem].",
       "",
-      "[I will read a letter]. [Listen carefully].",
+      "[Listen carefully].",
       "",
-      "[Hello, everyone]. [I have a problem]. [I made new American friend Sally]."
+      "[Hi, everyone]! [I have a new friend, Ellen]. [But I have a problem].",
+      "",
+      "배움문제 및 활동 안내:",
+      "",
+      "[Poor Dobby]! [Can we help him]?",
+      "",
+      "[Today, we will learn] (학습목표).",
+      "",
+      "[We have three activities].",
+      "",
+      "[We will do three activities].<br><br>[First, Look and Guess].<br> [Second, Practice together]. <br> [Third, Play a game]!"
     ],
     skillCategories: [
       {
@@ -159,7 +171,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'intro-listening',
             title: '듣기 상황',
             content: [
-              "[But I don't understand] [what she said]."
+              "[I can't understand her]."
             ]
           }
         ]
@@ -173,7 +185,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'intro-speaking',
             title: '말하기 상황',
             content: [
-              "[But I don't know] [how to speak in English]."
+              "[I can't speak English]."
             ]
           }
         ]
@@ -187,7 +199,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'intro-reading',
             title: '읽기 상황',
             content: [
-              "[She sent me a message]. [But I can't read it]."
+              "[I can't read her message]."
             ]
           }
         ]
@@ -201,86 +213,48 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'intro-writing',
             title: '쓰기 상황',
             content: [
-              "[She sent me a message]. [But I can't answer it]."
+              "[I can't write back.]."
             ]
           }
         ]
       }
-    ],
-    closingContent: [
-      "학습문제 확인:",
-      "",
-      "[What is 도비's problem]? 철수? [Yes, right].",
-      "",
-      "[Then What should we learn today] [to help 도비]? 유리!",
-      "",
-      "[Yes], [Today, we are going to learn] [how to (내용)]",
-      "",
-      "[We will do three activities]."
     ]
   },
   {
     id: 'activity1',
     title: 'Activity 1',
     content: [
-      "Let's go together activity 1. This activity is Let's (listen/ look)",
+      "#시작",
       "",
-      "look at the screen. who are they? Tom and Mina.",
+      "Let's start Activity 1, Look and Guess!",
+      "Look at the screen. Look at this picture.",
+      "Who are they? Yes! They are Tom and Mina.",
+      "What are they doing? Right. They are talking.",
       "",
-      "oh, look at them, Can you guess what they are talking about? do you think so?"
-    ],
-    skillCategories: [
-      {
-        id: 'listening',
-        title: '듣말읽',
-        icon: '👂🗣️📖',
-        activities: [
-          {
-            id: 'activity1-listen-speak-read',
-            title: '듣 말 읽 (Listen, Speak, Read)',
-            content: [
-              "While you listen to the dialogue, you have to check your guessing. Listen carefully and remember what characters say.",
-              "",
-              "Did you enjoy the dialog? What did 톰 say? Right, he said~.",
-              "",
-              "What did 미나 say? Yes, she answered~.",
-              "",
-              "Then let's check today's key expressions (붙이기). Repeat after me <Key expression>"
-            ]
-          }
-        ]
-      },
-      {
-        id: 'writing',
-        title: '쓰',
-        icon: '✏️',
-        activities: [
-          {
-            id: 'activity1-write',
-            title: '쓰 (Write)',
-            content: [
-              "Now, look at the board and check your guess!",
-              "",
-              "This is script about their picture. What sentences can you see? (답)",
-              "",
-              "There are today's key sentences. Let's read it together!",
-              "",
-              "Do you know how to spell these words? Let me show you on the board.",
-              "",
-              "Now everybody we need a finger pen! Let's write words in the air.",
-              "",
-              "While writing, say the alphabet(words) at the same time. Ready? go!"
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'activity2',
-    title: 'Activity 2',
-    content: [
-      "Let's go together activity 2. This activity is Let's [practice]"
+      "#추측",
+      "",
+      "What are they saying? Can you guess? (잠시 대기)",
+      "Wow! Nice guess!",
+      "Now, let's watch the video.",
+      "(비디오 시청 후)",
+      "Did you listen well? Let's check!",
+      "What did Tom say? (잠시 대기) Good!",
+      "How did Mina answer? (잠시 대기) Great!",
+      "You are such a good listener/speaker!",
+      "",
+      "#key expression 제시",
+      "",
+      "Now, look at the board.",
+      "These are today's expressions. (천천히 가리키며)",
+      "",
+      "#반복",
+      "",
+      "Listen and repeat after me, please.",
+      "(표현 1) - (듣는 척)",
+      "(표현 2) - (듣는 척)",
+      "Perfect! One more time?",
+      "(표현 반복)",
+      "You are so good!"
     ],
     skillCategories: [
       {
@@ -289,23 +263,13 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
         icon: '👂',
         activities: [
           {
-            id: 'clapping-game',
-            title: 'Clapping game',
+            id: 'activity1-listening',
+            title: '듣기 (TPR 활동)',
             content: [
-              "I will (speak, show) sentence about the picture",
-              "If the sentence and picture match together, clap your hands with your partner",
-              "If they do not match, What should you do?"
-            ]
-          },
-          {
-            id: 'snatch-game',
-            title: 'Snatch game',
-            content: [
-              "① spread the (picture/ sentence) cards on desk.",
-              "② listen to the dialogue.",
-              "③ Excellent, 훈이! Snatch the right card.",
-              "If dialogue and card are match, take the cards quickly!",
-              "The person who gets the most cards is winner."
+              "Now, let's learn how to listen.",
+              "Listen to me and move your body.",
+              "(표현을 말하며 동작 시범)",
+              "Great!  You are great listeners!"
             ]
           }
         ]
@@ -316,35 +280,14 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
         icon: '🗣️',
         activities: [
           {
-            id: 'chant-song',
-            title: '찬트 / 노래',
+            id: 'activity1-speaking',
+            title: '말하기 (역할 연습 - 짝 활동)',
             content: [
-              "Let's learn a new c/s!",
-              "Listen to the chant/song carefully,",
-              "Did you listen well? which words did you hear?",
-              "Let's practice line by line. Repeat after me.",
-              "",
-              "+ 모션",
-              "Now we will sing with motions.",
-              "Look at me and follow my motions."
-            ]
-          },
-          {
-            id: 'turtle-rabbit-speaking',
-            title: 'Turtle-rabbit speaking',
-            content: [
-              "This time we will do a turtle-rabbit speaking!",
-              "I will divide you two teams.",
-              "This is group A, and this is group B.",
-              "When I say turtle, group A speak this slowly.",
-              "When I sat rabbit, group B speak this fast.",
-              "",
-              "If you understand make a big circle to me.",
-              "Great! Here we go. Let's switch the roles!",
-              "",
-              "Then I will divide you two teams. This is group A, and this is group B.",
-              "Group A will sing red sentence, and group B will sing blue sentence.",
-              "Let's switch the roles!"
+              "Now, let's learn how to speak.",
+              "Practice with your partner.",
+              "Ready? Start! (연습 대기)",
+              "Now, switch the roles.",
+              "Great! You are great speakers!"
             ]
           }
         ]
@@ -355,29 +298,13 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
         icon: '📖',
         activities: [
           {
-            id: 'turtle-rabbit-reading',
-            title: 'Turtle-rabbit reading',
+            id: 'activity1-reading',
+            title: '읽기',
             content: [
-              "This time we will do a turtle-rabbit reading!",
-              "I will divide you two teams.",
-              "This is group A, and this is group B.",
-              "When I say turtle, group A read this slowly.",
-              "When I sat rabbit, group B read this fast.",
-              "",
-              "If you understand make a big circle to me.",
-              "Great! Here we go. Let's switch the roles!"
-            ]
-          },
-          {
-            id: 'process-reading',
-            title: '과정 중심 읽기',
-            content: [
-              "단어 : Let's read words.",
-              "어구 : Let's read phrases.",
-              "문장 : Let's read sentences.",
-              "",
-              "<짝 연습>",
-              "Open your book to page 50. Read aloud the dialogue with your partner."
+              "Now, let's learn how to read.",
+              "Look at the screen and read after me.",
+              "(표현들을 천천히, 끊어서 읽어주기)",
+              "Great!  You are great readers!"
             ]
           }
         ]
@@ -388,28 +315,126 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
         icon: '✏️',
         activities: [
           {
-            id: 'sentence-arrangement',
-            title: '문장 배열',
+            id: 'activity1-writing',
+            title: '쓰기 (Air Writing)',
             content: [
-              "Let's see the screen. What's the problem?",
-              "Yes, Some words are mixed!",
-              "How can we do?",
-              "We can make perfect sentence with partner."
-            ]
-          },
-          {
-            id: 'fill-blanks',
-            title: '빈칸 채우기',
-            content: [
-              "There are some pictures. I will give you a work sheet. There are some blanks, You can write down words to complete the sentence.",
-              "",
-              "(간단) Are you done? Let's check the answer. What is the first blank?",
-              "(심화) Times up everyone! Who need more time? I think all of you've done. This time change your worksheet with your partner and check the answer together.",
-              "Are you finished? Who can say the answer? 맹구? Great! Good job every one!"
+              "Now, let's learn how to write.",
+              "Raise your finger and do air writing.",
+              "Ready? Start! (공중에 쓰는 척)",
+              "Great!  You are great writers!"
             ]
           }
         ]
       }
+    ]
+  },
+  {
+    id: 'activity2',
+    title: 'Activity 2',
+    content: [
+      "#시작",
+      "",
+      "Activity 2! Practice Together!",
+      "Let's do pair work.",
+      "",
+      "# 활동지 설명",
+      "",
+      "Look at this worksheet.",
+      "There are many pictures of our daily life.",
+      "What can you see? Right!",
+      "",
+      "#방법 안내",
+      "",
+      "Listen! Rule is simple."
+    ],
+    skillCategories: [
+      {
+        id: 'listening',
+        title: '듣기',
+        icon: '👂',
+        activities: [
+          {
+            id: 'activity2-listening',
+            title: '듣기',
+            content: [
+              "No.1 Listen to the dialogue.",
+              "No.2 Circle the picture."
+            ]
+          }
+        ]
+      },
+      {
+        id: 'speaking',
+        title: '말하기',
+        icon: '🗣️',
+        activities: [
+          {
+            id: 'activity2-speaking',
+            title: '말하기',
+            content: [
+              "No.1 Look at the picture.",
+              "No.2 Talk to your friend."
+            ]
+          }
+        ]
+      },
+      {
+        id: 'reading',
+        title: '읽기',
+        icon: '📖',
+        activities: [
+          {
+            id: 'activity2-reading',
+            title: '읽기',
+            content: [
+              "No.1 Read the sentence.",
+              "No.2 Circle the picture."
+            ]
+          }
+        ]
+      },
+      {
+        id: 'writing',
+        title: '쓰기',
+        icon: '✏️',
+        activities: [
+          {
+            id: 'activity2-writing',
+            title: '쓰기',
+            content: [
+              "No.1 Look at the picture.",
+              "No.2 Fill in the blanks."
+            ]
+          }
+        ]
+      }
+    ],
+    closingContent: [
+      "Any questions? No?",
+      "Okay. Please pass it on. (나눠주는 척)",
+      "Remember! Please cooperate with your partner.",
+      "(홀수 고려: You three, work together.)",
+      "",
+      "#ICQ (확인 질문)",
+      "",
+      "Let me check.",
+      "What is the most important thing? Yes, cooperation!",
+      "What should you do first? (잠시 대기) Nice understanding!",
+      "",
+      "#시간",
+      "",
+      "I'll give you 10 minutes.",
+      "Ready? Start!",
+      "",
+      "(순회지도)",
+      "\"Good job!\", \"Oh, nice!\", \"Need help?\"",
+      "",
+      "#마무리 + 정답 확인",
+      "",
+      "Time is up! Let's check the answers.",
+      "Did everyone get the correct answer?",
+      "Excellent! You are such good [listeners/speakers/readers/writers]!",
+      "Put your worksheet in your portfolio."
     ]
   },
   {
@@ -536,27 +561,39 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     id: 'conclusion',
     title: '정리',
     content: [
-      "학습 내용 정리:",
+      "수업정리:",
       "",
-      "[It's time to finish]. [Let's review] [today's lesson].",
+      "[Time is up]! [Let's wrap up].",
       "",
-      "[What we learn today]? <br>[Yes], [Today we learned about] (내용).",
+      "[What did we learn today]?",
       "",
-      "평가:",
+      "[Today's English was] (주요 표현).",
       "",
-      "[I will give you] [the worksheet]. <br>[If anyone finished] [bring it to me].",
+      "[Now we can help Dobby]! [Good job]!",
       "",
-      "차시 예고:",
+      "자기평가:",
       "",
-      "[Look at the screen]. [What's happen to her]?",
+      "[Now, finger check time]!",
       "",
-      "[So can you guess the next lesson]? <br>[Yes], [next time we will learn about] (내용)",
+      "[One to five]. [Five is \"Great!\"], [One is \"So-so\"].",
       "",
-      "작별 인사:",
+      "[How was your work today]? [One, two, three, show me]!",
       "",
-      "[Everyone was really great today]. [I'm very proud of you].",
+      "[Wow, many fives]! [You are stars]!",
       "",
-      "[See you next time]! [Bye]~"
+      "과제/환류:",
+      "",
+      "[Here is your homework].",
+      "",
+      "[Use this worksheet]. [Review at home].",
+      "",
+      "끝:",
+      "",
+      "[You did a great job today].",
+      "",
+      "[Let's clap together]! (짝짝짝!)",
+      "",
+      "[See you next time]. [Bye-bye]!"
     ]
   },
   {
