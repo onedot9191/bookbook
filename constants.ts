@@ -552,7 +552,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "",
       "[What did we learn today]?",
       "",
-      "[Today's English was] (주요 표현).",
+      "[Today's key expressions were] (주요 표현).",
       "",
       "[Now we can help Dobby]! [Good job]!",
       "",
