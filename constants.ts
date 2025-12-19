@@ -149,7 +149,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "",
       "[Listen carefully].",
       "",
-      "[Hi, everyone]! [I have a new friend, Ellen]. [But I have a problem].",
+      "[Hello, everyone]! [I have a new friend, Ellen]. [But I have a problem].",
       "",
       "배움문제 및 활동 안내:",
       "",
