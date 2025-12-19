@@ -226,35 +226,35 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "#시작",
       "",
-      "Let's start Activity 1, Look and Guess!",
-      "Look at the screen. Look at this picture.",
-      "Who are they? Yes! They are Tom and Mina.",
-      "What are they doing? Right. They are talking.",
+      "[Let's start Activity 1], [Look and Guess]!",
+      "[Look at the screen].",
+      "[Who are they]? [Yes]! [They are Tom and Mina].",
+      "[What are they doing]? [Right]. [They are talking].",
       "",
       "#추측",
       "",
-      "What are they saying? Can you guess? (잠시 대기)",
-      "Wow! Nice guess!",
-      "Now, let's watch the video.",
+      "[What are they saying]? [Can you guess]? (잠시 대기)",
+      "[Wow]! [Nice guess]!",
+      "[Now, let's watch the video].",
       "(비디오 시청 후)",
-      "Did you listen well? Let's check!",
-      "What did Tom say? (잠시 대기) Good!",
-      "How did Mina answer? (잠시 대기) Great!",
-      "You are such a good listener/speaker!",
+      "[Did you listen well]? [Let's check]!",
+      "[What did Tom say]? (잠시 대기) Good!",
+      "[How did Mina answer]? (잠시 대기) Great!",
+      "[You are such a good] [listener]/[speaker]!",
       "",
       "#key expression 제시",
       "",
-      "Now, look at the board.",
-      "These are today's expressions. (천천히 가리키며)",
+      "[Now], [look at the board].",
+      "[These are today's expressions]. (천천히 가리키며)",
       "",
       "#반복",
       "",
-      "Listen and repeat after me, please.",
+      "[Listen and repeat after me], [please].",
       "(표현 1) - (듣는 척)",
       "(표현 2) - (듣는 척)",
-      "Perfect! One more time?",
+      "[Perfect]! [One more time]?",
       "(표현 반복)",
-      "You are so good!"
+      "[You are so good]!"
     ],
     skillCategories: [
       {
@@ -266,10 +266,10 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity1-listening',
             title: '듣기 (TPR 활동)',
             content: [
-              "Now, let's learn how to listen.",
-              "Listen to me and move your body.",
+              "[Now], [let's learn how to listen].",
+              "[Listen to me and move your body].",
               "(표현을 말하며 동작 시범)",
-              "Great!  You are great listeners!"
+              "[Great]!  [You are great listeners]!"
             ]
           }
         ]
@@ -283,11 +283,11 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity1-speaking',
             title: '말하기 (역할 연습 - 짝 활동)',
             content: [
-              "Now, let's learn how to speak.",
-              "Practice with your partner.",
-              "Ready? Start! (연습 대기)",
-              "Now, switch the roles.",
-              "Great! You are great speakers!"
+              "[Now], [let's learn how to speak].",
+              "[Practice with your partner].",
+              "[Ready]? [Start]! (연습 대기)",
+              "[Now], [switch the roles].",
+              "[Great]! [You are great speakers]!"
             ]
           }
         ]
@@ -301,10 +301,10 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity1-reading',
             title: '읽기',
             content: [
-              "Now, let's learn how to read.",
-              "Look at the screen and read after me.",
+              "[Now], [let's learn how to read].",
+              "[Look at the screen and read after me].",
               "(표현들을 천천히, 끊어서 읽어주기)",
-              "Great!  You are great readers!"
+              "[Great]!  [You are great readers]!"
             ]
           }
         ]
@@ -318,10 +318,10 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity1-writing',
             title: '쓰기 (Air Writing)',
             content: [
-              "Now, let's learn how to write.",
-              "Raise your finger and do air writing.",
-              "Ready? Start! (공중에 쓰는 척)",
-              "Great!  You are great writers!"
+              "[Now], [let's learn how to write].",
+              "[Raise your finger and do air writing].",
+              "[Ready]? [Start]! (공중에 쓰는 척)",
+              "[Great]!  [You are great writers]!"
             ]
           }
         ]
@@ -334,18 +334,18 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "#시작",
       "",
-      "ok, then let's move on to second activity, Practice Together!",
-      "Let's do pair work.",
+      "[ok], [then let's move on to second activity], [Practice Together]!",
+      "[Let's do pair work].",
       "",
       "# 활동지 설명",
       "",
-      "Look at this worksheet.",
-      "There are many pictures of our daily life.",
-      "What can you see? Right!",
+      "[Look at this worksheet].",
+      "[There are many pictures of our daily life].",
+      "[What can you see]? [Right]!",
       "",
       "#방법 안내",
       "",
-      "Listen! Rule is simple."
+      "[Listen]! [Rule is simple]."
     ],
     skillCategories: [
       {
@@ -357,8 +357,8 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity2-listening',
             title: '듣기',
             content: [
-              "First, Listen to the dialogue.",
-              "Second, Circle the picture."
+              "[First], [Listen to the dialogue].",
+              "[Second], [Circle the picture]."
             ]
           }
         ]
@@ -372,8 +372,8 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity2-speaking',
             title: '말하기',
             content: [
-              "First, Look at the picture.",
-              "Second, Talk to your friend."
+              "[First], [Look at the picture].",
+              "[Second], [Talk to your friend]."
             ]
           }
         ]
@@ -387,8 +387,8 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity2-reading',
             title: '읽기',
             content: [
-              "First, Read the sentence.",
-              "Second, Circle the picture."
+              "[First], [Read the sentence].",
+              "[Second], [Circle the picture]."
             ]
           }
         ]
@@ -402,40 +402,40 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity2-writing',
             title: '쓰기',
             content: [
-              "First, Look at the picture.",
-              "Second, Fill in the blanks.",
-              "(과정) Don't worry about mistakes. You can fix them."
+              "[First], [Look at the picture].",
+              "[Second], [Fill in the blanks].",
+              "(과정) [Don't worry about mistakes]. [You can fix them]."
             ]
           }
         ]
       }
     ],
     closingContent: [
-      "Any questions? No?",
-      "Okay. Please pass it on. (나눠주는 척)",
-      "Remember! Please cooperate with your partner.",
-      "(홀수 고려: You three, work together.)",
+      "[Any questions]? [No]?",
+      "[Okay]. [Please pass it on]. (나눠주는 척)",
+      "[Remember]! [Please cooperate with your partner].",
+      "(홀수 고려: [You three], [work together].)",
       "",
       "#ICQ (확인 질문)",
       "",
-      "Let me check.",
-      "What is the most important thing? Yes, cooperation!",
-      "What should you do first? (잠시 대기) Nice understanding!",
+      "[Let me check].",
+      "[What is the most important thing]? [Yes], [cooperation]!",
+      "[What should you do first]? (잠시 대기) [Nice understanding]!",
       "",
       "#시간",
       "",
-      "I'll give you 10 minutes.",
-      "Ready? Start!",
+      "[I'll give you 10 minutes].",
+      "[Ready]? [Start]!",
       "",
       "(순회지도)",
-      "\"Good job!\", \"Oh, nice!\", \"Need help?\"",
+      "\"[Good job]!\", \"[Oh, nice]!\", \"[Need help]?\"",
       "",
       "#마무리 + 정답 확인",
       "",
-      "Time is up! Let's check the answers.",
-      "Did everyone get the correct answer?",
-      "Excellent! You are such good [listeners/speakers/readers/writers]!",
-      "Put your worksheet in your portfolio."
+      "[Time is up]! [Let's check the answers].",
+      "[Did everyone get the correct answer]?",
+      "[Excellent]! [You are such good] [listeners]/[speakers]/[readers]/[writers]!",
+      "[Put your worksheet in your portfolio]."
     ]
   },
   {
@@ -444,17 +444,17 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "#시작",
       "",
-      "Now, it's time for third activity, Role play.",
-      "This activity is group work, so make 6 group of 4.",
+      "[Now], [it's time for third activity], [Role play].",
+      "[This activity is group work], [so make 6 group of 4].",
       "",
       "#활동지 설명",
       "",
-      "Look at the worksheet. There are some pictures.",
-      "What can you see in these pictures?",
+      "[Look at the worksheet]. [There are some pictures].",
+      "[What can you see in these pictures]?",
       "",
       "#방법 안내",
       "",
-      "Before we start this activity, let me explain how to do this activity."
+      "[Before we start Role play], [let me explain how to Role play]."
     ],
     skillCategories: [
       {
@@ -466,9 +466,9 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity3-listening-speaking',
             title: '듣기&말하기',
             content: [
-              "First, pick a picture.",
-              "Second, make a dialogue with key expressions.",
-              "Third, practice it with your partner."
+              "[First], [pick a picture].",
+              "[Second], [make a dialogue with key expressions].",
+              "[Third], [practice it with your partner]."
             ]
           }
         ]
@@ -482,9 +482,9 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity3-reading',
             title: '읽기',
             content: [
-              "First, pick a picture.",
-              "Second, read the dialogue aloud.",
-              "Third, practice it with your partner."
+              "[First], [pick a picture].",
+              "[Second], [read the dialogue aloud].",
+              "[Third], [practice it with your partner]."
             ]
           }
         ]
@@ -498,9 +498,9 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity3-writing',
             title: '쓰기',
             content: [
-              "First, pick a picture.",
-              "Second, fill in the blanks and write the dialogue.",
-              "Third, practice it with your partner."
+              "[First], [pick a picture].",
+              "[Second], [fill in the blanks and write the dialogue].",
+              "[Third], [practice it with your partner]."
             ]
           }
         ]
@@ -514,9 +514,9 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity3-integrated',
             title: '통합',
             content: [
-              "First, pick a picture.",
-              "Second, read the dialogue and fill in the blanks.",
-              "Third, practice speaking with your partner."
+              "[First], [pick a picture].",
+              "[Second], [read the dialogue and fill in the blanks].",
+              "[Third], [practice speaking with your partner]."
             ]
           }
         ]
@@ -525,20 +525,20 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     closingContent: [
       "#ICQ",
       "",
-      "Let me check your understanding.",
-      "What should you do first?",
-      "Is this group work or pair work? Right. It's group work.",
-      "What is the most important thing in group activity?",
-      "Right. It's ( ★Cooperation / Participation )",
+      "[Let me check your understanding].",
+      "[What should you do first]?",
+      "[Is this group work or pair work]? [Right]. [It's group work].",
+      "[What is the most important thing in group activity]?",
+      "[Right]. [It's] ([Cooperation] / [Participation])",
       "",
       "#시간 안내",
       "",
-      "I'll give you 15 minutes.",
+      "[I'll give you 15 minutes].",
       "(순회지도)",
       "",
       "#마무리",
       "",
-      "Time's up! It's time to show your performance."
+      "[Time's up]! [It's time to show your performance]."
     ]
   },
   {
