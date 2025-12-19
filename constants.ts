@@ -159,7 +159,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "",
       "[Today, we will learn] (학습목표).",
       "",
-      "[We will do three activities].<br><br>[First, Look and Guess].<br> [Second, Practice together]. <br> [Third, Play a game]!"
+      "[We will do three activities].<br><br>[First, Look and Guess].<br> [Second, Work together]. <br> [Third, Play a game]!"
     ],
     skillCategories: [
       {
@@ -334,7 +334,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "#시작",
       "",
-      "[Ok], [then let's move on to second activity], [Practice Together]!",
+      "[Ok], [then let's move on to second activity], [Work Together]!",
       "[This activity is pair work].",
       "",
       "# 활동지 설명",
@@ -373,7 +373,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             title: '말하기',
             content: [
               "[First], [Look at the picture].",
-              "[Second], [Talk to your friend]."
+              "[Second], [Talk to your partner]."
             ]
           }
         ]
@@ -419,7 +419,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "#ICQ (확인 질문)",
       "",
       "[Let me check].",
-      "[What is the most important thing]? [Yes], [cooperation]!",
+      "[What is the most important thing]? <br> [Yes], [cooperation]!",
       "[What should you do first]? (잠시 대기) [Nice understanding]!",
       "",
       "#시간",
@@ -430,12 +430,11 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "(순회지도)",
       "\"[Good job]!\", \"[Oh, nice]!\", \"[Need help]?\"",
       "",
-      "#마무리 + 정답 확인",
+      "#마무리",
       "",
-      "[Time is up]! [Let's check the answers].",
+      "[Time's up]! [Let's check the answers].",
       "[Did everyone get the correct answer]?",
-      "[Excellent]! [You are such good] [listeners]/[speakers]/[readers]/[writers]!",
-      "[Put your worksheet in your portfolio]."
+      "[Excellent]! [You are such a good] <br> [listeners]/[speakers]/[readers]/[writers]!"
     ]
   },
   {
@@ -538,7 +537,9 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "",
       "#마무리",
       "",
-      "[Time's up]! [It's time to show your performance]."
+      "[Time's up]! [It's time to show your performance].",
+      "",
+      "[Put your worksheet in your portfolio]."
     ]
   },
   {
