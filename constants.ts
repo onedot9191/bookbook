@@ -213,7 +213,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'intro-writing',
             title: '쓰기 상황',
             content: [
-              "[I can't write back.]."
+              "[I can't write back]."
             ]
           }
         ]
