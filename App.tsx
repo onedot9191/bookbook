@@ -2665,7 +2665,8 @@ const collectPolicyDetailInputIds = (
         listening: { bg: 'bg-[hsl(var(--card))]', border: 'border-blue-400', text: 'text-blue-800', icon: '👂', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
         speaking: { bg: 'bg-[hsl(var(--card))]', border: 'border-green-400', text: 'text-green-800', icon: '🗣️', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
         reading: { bg: 'bg-[var(--card)]', border: 'border-amber-400', text: 'text-amber-800', icon: '📖', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
-        writing: { bg: 'bg-[hsl(var(--card))]', border: 'border-purple-400', text: 'text-purple-800', icon: '✏️', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' }
+        writing: { bg: 'bg-[hsl(var(--card))]', border: 'border-purple-400', text: 'text-purple-800', icon: '✏️', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
+        integrated: { bg: 'bg-[hsl(var(--card))]', border: 'border-rose-400', text: 'text-rose-800', icon: '🔗', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' }
       };
 
       const currentSkillCategory = section.skillCategories.find(cat => cat.id === activeSkillTab);
@@ -2759,7 +2760,8 @@ const collectPolicyDetailInputIds = (
                           listening: { bg: 'bg-[hsl(var(--card))]', border: 'border-blue-400', text: 'text-blue-800', icon: '👂', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
                           speaking: { bg: 'bg-[hsl(var(--card))]', border: 'border-green-400', text: 'text-green-800', icon: '🗣️', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
                           reading: { bg: 'bg-[var(--card)]', border: 'border-amber-400', text: 'text-amber-800', icon: '📖', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
-                          writing: { bg: 'bg-[hsl(var(--card))]', border: 'border-purple-400', text: 'text-purple-800', icon: '✏️', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' }
+                          writing: { bg: 'bg-[hsl(var(--card))]', border: 'border-purple-400', text: 'text-purple-800', icon: '✏️', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' },
+                          integrated: { bg: 'bg-[hsl(var(--card))]', border: 'border-rose-400', text: 'text-rose-800', icon: '🔗', cardBg: 'bg-[hsl(var(--card))]', cardText: 'text-slate-800 dark:text-slate-200' }
                         };
 
                         const currentSkillCategory = section.skillCategories.find(cat => cat.id === activeSkillTab);
