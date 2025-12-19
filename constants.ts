@@ -127,9 +127,9 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "인사:",
       "",
-      "[Hi, everyone]! [How are you today]?",
+      "[Hello, everyone]! [How are you today]?",
       "",
-      "[Good]? [Great]? [I'm happy, too]!",
+      "[Good]? [Great]? [I'm also happy to hear that]!",
       "",
       "[Is everyone here]? [One, two, three...] <br> [Yes]! [All] (학생 수) [students are here].",
       "",
