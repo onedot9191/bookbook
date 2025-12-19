@@ -27,7 +27,7 @@ export interface ActivityCard {
 }
 
 export interface SkillCategory {
-  id: 'listening' | 'speaking' | 'reading' | 'writing';
+  id: 'listening' | 'speaking' | 'reading' | 'writing' | 'integrated';
   title: string;
   icon: string;
   activities: ActivityCard[];
