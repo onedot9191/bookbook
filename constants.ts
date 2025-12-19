@@ -334,7 +334,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "#시작",
       "",
-      "Activity 2! Practice Together!",
+      "ok, then let's move on to second activity, Practice Together!",
       "Let's do pair work.",
       "",
       "# 활동지 설명",
@@ -357,8 +357,8 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity2-listening',
             title: '듣기',
             content: [
-              "No.1 Listen to the dialogue.",
-              "No.2 Circle the picture."
+              "First, Listen to the dialogue.",
+              "Second, Circle the picture."
             ]
           }
         ]
@@ -372,8 +372,8 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity2-speaking',
             title: '말하기',
             content: [
-              "No.1 Look at the picture.",
-              "No.2 Talk to your friend."
+              "First, Look at the picture.",
+              "Second, Talk to your friend."
             ]
           }
         ]
@@ -387,8 +387,8 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity2-reading',
             title: '읽기',
             content: [
-              "No.1 Read the sentence.",
-              "No.2 Circle the picture."
+              "First, Read the sentence.",
+              "Second, Circle the picture."
             ]
           }
         ]
@@ -402,8 +402,9 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity2-writing',
             title: '쓰기',
             content: [
-              "No.1 Look at the picture.",
-              "No.2 Fill in the blanks."
+              "First, Look at the picture.",
+              "Second, Fill in the blanks.",
+              "(과정) Don't worry about mistakes. You can fix them."
             ]
           }
         ]
@@ -441,57 +442,33 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     id: 'activity3',
     title: 'Activity 3',
     content: [
-      "Let's go together activity 3. This activity is Let's [game]",
+      "#시작",
       "",
-      "Last activity name is! 게임 이름 game.",
+      "Now, it's time for third activity, Role play.",
+      "This activity is group work, so make 6 group of 4.",
       "",
-      "Do you know this game? It's okay. I will explain the rule"
+      "#활동지 설명",
+      "",
+      "Look at the worksheet. There are some pictures.",
+      "What can you see in these pictures?",
+      "",
+      "#방법 안내",
+      "",
+      "Before we start this activity, let me explain how to do this activity."
     ],
     skillCategories: [
       {
         id: 'listening',
-        title: '듣기',
-        icon: '👂',
+        title: '듣기&말하기',
+        icon: '👂🗣️',
         activities: [
           {
-            id: 'snatch-game-3',
-            title: 'Snatch game (듣/읽)',
+            id: 'activity3-listening-speaking',
+            title: '듣기&말하기',
             content: [
-              "① spread the (picture/ sentence) cards on desk.",
-              "② listen to the dialogue.",
-              "③ Excellent, 지민! Snatch the right card.",
-              "If dialogue and card are match, take the cards quickly!",
-              "The person who gets the most cards is winner."
-            ]
-          },
-          {
-            id: 'whispering-game',
-            title: 'Whispering game (듣기 + 말, 읽, 쓰)',
-            content: [
-              "① I (say / show) a sentence the first student.",
-              "② First students should whisper it to the next st.",
-              "③ The last student comes to (①the front and choose the right picture./②me and says what you heard. / ③the front and write sentences.)",
-              "- Do you understand?",
-              "- If one question is over, switch the role."
-            ]
-          }
-        ]
-      },
-      {
-        id: 'speaking',
-        title: '말하기',
-        icon: '🗣️',
-        activities: [
-          {
-            id: 'memory-game',
-            title: 'Memory game',
-            content: [
-              "① remember 3 pictures on the screen.",
-              "② I will call the number of picture.",
-              "③ Talk to your team members about the key expression for picture.",
-              "④ Come and talk to me quitely.",
-              "- (사진 보여줌) Memorize 3 pictures. 3, 2, 1",
-              "- what can u say in the third p's situation?"
+              "First, pick a picture.",
+              "Second, make a dialogue with key expressions.",
+              "Third, practice it with your partner."
             ]
           }
         ]
@@ -502,17 +479,12 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
         icon: '📖',
         activities: [
           {
-            id: 'role-play',
-            title: 'Role-play (읽+말)',
+            id: 'activity3-reading',
+            title: '읽기',
             content: [
-              "Let's check today's script. Let's read together.",
-              "This is group A, and this is group B.",
-              "Group A will read red sentence, and group B will read blue sentence.",
-              "",
-              "Then we can practice our role-play!",
-              "Let's make (숫자) groups!",
-              "",
-              "It's time for performance. Who wants to go first? Come up to the front. Let's count down 3, 2, 1 ready, action!"
+              "First, pick a picture.",
+              "Second, read the dialogue aloud.",
+              "Third, practice it with your partner."
             ]
           }
         ]
@@ -523,38 +495,50 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
         icon: '✏️',
         activities: [
           {
-            id: 'info-gap-game',
-            title: 'Information gap game',
+            id: 'activity3-writing',
+            title: '쓰기',
             content: [
-              "① I will give you 2 different information card. There are some blanks.",
-              "② You can fill in the blanks by asking questions",
-              "③ The hints are in your partner's info, card. so you have to help each other."
+              "First, pick a picture.",
+              "Second, fill in the blanks and write the dialogue.",
+              "Third, practice it with your partner."
             ]
-          },
+          }
+        ]
+      },
+      {
+        id: 'integrated',
+        title: '통합',
+        icon: '🔗',
+        activities: [
           {
-            id: 'sleeping-elephant',
-            title: 'Sleeping elephant game',
+            id: 'activity3-integrated',
+            title: '통합',
             content: [
-              "Every elephants go to sleep~",
-              "Wake up elephant 1. Look at the screen and remember~",
-              "Wake up elephant 4. ~~",
-              "Now, Wake up all elephants. Talk with your friends and write down the answer on your white board.",
-              "Times up! 3 2 1 Hold up~~",
-              "Let's check the answer!",
-              "Wow everyone did a good job."
+              "First, pick a picture.",
+              "Second, read the dialogue and fill in the blanks.",
+              "Third, practice speaking with your partner."
             ]
           }
         ]
       }
     ],
     closingContent: [
-      "Do you understand? Is it pair work or group work?",
+      "#ICQ",
       "",
-      "To be a winner, what should we do? you have to cooperate with your team.",
+      "Let me check your understanding.",
+      "What should you do first?",
+      "Is this group work or pair work? Right. It's group work.",
+      "What is the most important thing in group activity?",
+      "Right. It's ( ★Cooperation / Participation )",
       "",
-      "Are you ready? Now start! Time's up! Which group is winner?",
+      "#시간 안내",
       "",
-      "Let's give a big hand to each other!"
+      "I'll give you 15 minutes.",
+      "(순회지도)",
+      "",
+      "#마무리",
+      "",
+      "Time's up! It's time to show your performance."
     ]
   },
   {
@@ -602,23 +586,25 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "서론:",
       "",
-      "[Nowadays] (주제) [plays an important role] [in English education].",
+      "[Nowadays], <br> (주제) [is very important in English class.]",
       "",
-      "1) [This is because] [it has several advantages].",
+      "1) [It has some good points.]",
       "",
-      "2) [However], [it has several disadvantages].",
+      "2) [But, it has some bad points.]",
       "",
-      "[I'm going to tell you] (내용).",
+      "[So, I will talk about] (내용).",
       "",
       "본론:",
       "",
-      "[First], _______. [For example], _______.",
+      "[First,] . [For example,] .",
       "",
-      "[Second], _______. [For example], _______.",
+      "[Second,] . [For example,] .",
       "",
       "결론:",
       "",
-      "[If the teacher makes good use of] (내용), [students will be able to learn English effectively]."
+      "[If a teacher uses] (내용) [well],",
+      "",
+      "[students can learn English better.]"
     ]
   }
 ];
