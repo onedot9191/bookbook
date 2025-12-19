@@ -137,7 +137,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "",
       "전시학습:",
       "",
-      "[Let's review]. [Do you remember yesterday]?",
+      "[Before we start], [let's review]. [Do you remember yesterday]?",
       "",
       "[What did we learn]? (잠시 대기) [Very good]! [You remember everything]!",
       "",
@@ -145,7 +145,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "",
       "[Look! I have a letter]. (편지 봉투를 보여주며)",
       "",
-      "[It's from Dobby]. [He has a problem].",
+      "[It's from Dobby]. [Maybe, he has a problem].",
       "",
       "[Listen carefully].",
       "",
@@ -226,10 +226,10 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "#시작",
       "",
-      "[Let's start Activity 1], [Look and Guess]!",
+      "[Let's start first activity], [Look and Guess]!",
       "[Look at the screen].",
       "[Who are they]? [Yes]! [They are Tom and Mina].",
-      "[What are they doing]? [Right]. [They are talking].",
+      "[What are they doing]? [Right]. [They are saying].",
       "",
       "#추측",
       "",
@@ -245,7 +245,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "#key expression 제시",
       "",
       "[Now], [look at the board].",
-      "[These are today's expressions]. (천천히 가리키며)",
+      "[These are key expressions]. (천천히 가리키며)",
       "",
       "#반복",
       "",
@@ -267,7 +267,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             title: '듣기 (TPR 활동)',
             content: [
               "[Now], [let's learn how to listen].",
-              "[Listen to me and move your body].",
+              "[Listen to me] and [move your body].",
               "(표현을 말하며 동작 시범)",
               "[Great]!  [You are great listeners]!"
             ]
@@ -302,7 +302,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             title: '읽기',
             content: [
               "[Now], [let's learn how to read].",
-              "[Look at the screen and read after me].",
+              "[Look at the screen] and [read after me].",
               "(표현들을 천천히, 끊어서 읽어주기)",
               "[Great]!  [You are great readers]!"
             ]
@@ -319,7 +319,7 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             title: '쓰기 (Air Writing)',
             content: [
               "[Now], [let's learn how to write].",
-              "[Raise your finger and do air writing].",
+              "[Raise your finger] and [do air writing].",
               "[Ready]? [Start]! (공중에 쓰는 척)",
               "[Great]!  [You are great writers]!"
             ]
@@ -334,12 +334,12 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "#시작",
       "",
-      "[ok], [then let's move on to second activity], [Practice Together]!",
-      "[Let's do pair work].",
+      "[Ok], [then let's move on to second activity], [Practice Together]!",
+      "[This activity is pair work].",
       "",
       "# 활동지 설명",
       "",
-      "[Look at this worksheet].",
+      "[Look at the worksheet].",
       "[There are many pictures of our daily life].",
       "[What can you see]? [Right]!",
       "",
@@ -449,8 +449,8 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
       "",
       "#활동지 설명",
       "",
-      "[Look at the worksheet]. [There are some pictures].",
-      "[What can you see in these pictures]?",
+      "[Look at the worksheet]. [There are many situations of our daily life].",
+      "[What can you see]? [Right]!",
       "",
       "#방법 안내",
       "",
