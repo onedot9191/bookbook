@@ -587,25 +587,23 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
     content: [
       "서론:",
       "",
-      "[Nowadays], <br> (주제) [is very important in English class.]",
+      "[Nowadays], <br> (주제) [is very important in English class].",
       "",
-      "1) [It has some good points.]",
+      "1) [It has some good points].",
       "",
-      "2) [But, it has some bad points.]",
+      "2) [But, it has some bad points].", 
       "",
-      "[So, I will talk about] (내용).",
+      "[So, I will talk about them].",
       "",
       "본론:",
       "",
-      "[First,] . [For example,] .",
+      "[First,]. [For example,].",
       "",
-      "[Second,] . [For example,] .",
+      "[Second,]. [For example,].",
       "",
       "결론:",
       "",
-      "[If a teacher uses] (내용) [well],",
-      "",
-      "[students can learn English better.]"
+      "[If a teacher uses] (주제) [well],<br> [students can learn English better]."
     ]
   }
 ];
