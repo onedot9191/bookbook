@@ -703,7 +703,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
                       { title: '[삶에 실천한다]' }
                     ]
                   },
-                  { title: '한글날 기념 [한글사랑 교육활동] 실천사례 공모' }
+                  { title: '한글날 기념 [한글사랑 교육]활동 실천사례 공모' }
                 ]
               }
             ]
@@ -799,7 +799,9 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
                   {
                     title: '(초)[관계회복지원단] 운영',
                     children: [
-                      { title: '[학교로 찾아가는 대화 모임], [회복교실], [또래조정교육] 등' }
+                      { title: '[학교로 찾아가는 대화 모임]' },
+                      { title: '[회복교실]' },
+                      { title: '[또래조정교육]' }
                     ]
                   }
                 ]
@@ -985,9 +987,9 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
                 title: '교육과정 연계 실천중심 환경교육',
                 children: [
                   { title: '[환경학습권] 보장 및 교육과정 연계 환경교육 실시' },
-                  { title: '[1교 1필수·특색 환경 실천 과제] 운영' },
-                  { title: '[1교 1환경·지속가능한 발전교육(ESD) 동아리] 운영' },
-                  { title: '[생태나침반] 학교(유・초) 및 네트워크 운영' },
+                  { title: '[1교 1][필수]·[특색] [환경 실천 과제] 운영' },
+                  { title: '[1교 1][환경]·[지속가능한 발전][교육 동아리] 운영' },
+                  { title: '[생태나침반] 학교 및 네트워크 운영' },
                   { title: '학교 밖 [생물다양성] 및 [생태감수성] 환경교육 프로그램 운영' }
                 ]
               },
@@ -1041,7 +1043,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
                     ]
                   },
                   { title: '[원어민 보조교사] 배치' },
-                  { title: '[대구글로벌교육센터] 운영' }
+                  { title: '[대구글로벌교육]센터 운영' }
                 ]
               },
               {
