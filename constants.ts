@@ -641,17 +641,18 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
                 title: '마음교육',
                 children: [
                   {
-                    title: '[마음학기제] (초5, 중1)',
+                    title: '[마음학기제] ([초5], 중1)',
                     children: [
-                      { title: '마음수업 [15]차시 + [러닝페어]' }
+                      { title: '마음수업 [15]차시 + [러닝페어]' },
+                      { title: '워크북: [마음하이 5]' }
                     ]
                   },
                   {
                     title: '학생 [마음챙김] 프로그램 운영',
                     children: [
                       { title: '[마음챙김 명상]' },
-                      { title: '[감사하기 실천]' },
-                      { title: '[감정조절프로그램]' }
+                      { title: '[감사하기 실천] cf. 워크북: [감사는 나에게]' },
+                      { title: '[감정조절프로그램] cf. 내용: [긍정적 마음 가지기]' }
                     ]
                   },
                   { title: '마음교육 자료 개발 보급' }
