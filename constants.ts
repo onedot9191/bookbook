@@ -684,12 +684,26 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
                   {
                     title: '[인문학Eday] 운영',
                     children: [
-                      { title: '[책읽기3S 운동]' },
+                      {
+                        title: '[책읽기3S 운동]',
+                        children: [
+                          { title: '[Same book]' },
+                          { title: '[Same people]' },
+                          { title: '[Same mind Movement]' }
+                        ]
+                      },
                       { title: '[화요일의 인문학]' }
                     ]
                   },
-                  { title: '‘[내 손의 책, 내 삶의 힘]’ [독서 실천 3운동] 전개' },
-                  { title: '한글날 기념 한글사랑 교육활동 실천사례 공모' }
+                  {
+                    title: '‘[내 손의 책, 내 삶의 힘]’ [독서 실천 3운동] 전개',
+                    children: [
+                      { title: '[매일 읽는다]' },
+                      { title: '[함께 나눈다]' },
+                      { title: '[삶에 실천한다]' }
+                    ]
+                  },
+                  { title: '한글날 기념 [한글사랑 교육활동] 실천사례 공모' }
                 ]
               }
             ]
