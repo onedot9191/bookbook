@@ -1086,7 +1086,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
                   {
                     title: '1단계: [수업 안] [개별화] 지원',
                     children: [
-                      { title: '수업 중 보정지도와 기초학력 집중 지원 실시. 한글 미해득 학생을 위해 \'[찾아가는 한글 문해력 교실]\', \'[한글 발돋움 교실]\' 운영' }
+                      { title: '수업 중 보정지도와 기초학력 집중 지원 실시. 한글 미해득 학생을 위해 <br> [찾아가는 한글 문해력 교실], [한글 발돋움 교실] 운영' }
                     ]
                   },
                   {
@@ -1436,7 +1436,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
                     title: '[D-블렌디드] 수업 안착',
                     children: [
                       { title: '대구 [쌤튜브(SSam-Tube)] 활용 [D-블렌디드] 자료 공유(초)' },
-                      { title: 'AI·디지털 기반 [미래형 수업모델] 발굴 및 확산(초)' }
+                      { title: 'AI·디지털 기반 미래형 수업모델 발굴 및 확산(초)' }
                     ]
                   }
                 ]
