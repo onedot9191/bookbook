@@ -23,7 +23,7 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 }
  
@@ -35,7 +35,226 @@
   * {
     @apply border-border;
   }
+  
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.5s ease, background 0.5s ease;
   }
+}
+
+@layer utilities {
+  /* Smooth transition utilities */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .transition-spring {
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  /* Focus ring styling */
+  .focus-ring {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .card-hover:hover {
+    @apply -translate-y-1 shadow-lg;
+  }
+}
+
+/* ===== 시각적 피드백 애니메이션 ===== */
+
+/* 1차 오답: 부드러운 좌우 흔들림 (wobble) */
+@keyframes wobble {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-5px) rotate(-0.5deg); }
+  30% { transform: translateX(4px) rotate(0.3deg); }
+  45% { transform: translateX(-3px) rotate(-0.3deg); }
+  60% { transform: translateX(2px) rotate(0.2deg); }
+  75% { transform: translateX(-1px) rotate(-0.1deg); }
+  90% { transform: translateX(0.5px); }
+}
+
+.animate-wobble {
+  animation: wobble 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* 1차 오답: Ripple 효과 */
+@keyframes ripple {
+  0% {
+    box-shadow: 0 0 0 0 oklch(0.7 0.18 45 / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px oklch(0.7 0.18 45 / 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 12px oklch(0.7 0.18 45 / 0);
+  }
+}
+
+.animate-ripple {
+  animation: ripple 0.5s ease-out;
+}
+
+
+/* 정답 타이핑 애니메이션 */
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  0%, 50% { border-right-color: transparent; }
+  51%, 100% { border-right-color: var(--destructive); }
+}
+
+.typing-answer {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--destructive);
+  animation: 
+    typewriter 0.8s steps(20) forwards,
+    blink-caret 0.5s step-end 3;
+}
+
+/* 호버 확대 효과 */
+.input-hover-scale {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              box-shadow 0.2s ease;
+}
+
+.input-hover-scale:hover:not(:disabled) {
+  transform: scale(1.02) translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.input-hover-scale:focus:not(:disabled) {
+  transform: scale(1.01);
+  box-shadow: var(--shadow-sm), 0 0 0 3px var(--ring);
+}
+
+/* 타이핑 바운스 효과 */
+@keyframes typing-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+
+.animate-typing-bounce {
+  animation: typing-bounce 0.08s ease-out;
+}
+
+/* 입력창 테두리 펄스 효과 */
+@keyframes border-pulse {
+  0%, 100% { border-color: var(--primary); }
+  50% { border-color: var(--ring); }
+}
+
+.input-typing-active {
+  animation: border-pulse 0.25s ease-in-out;
+}
+
+/* 정답 시 글로우 효과 - 더 세련된 버전 */
+@keyframes correct-glow {
+  0% {
+    box-shadow: 0 0 0 0 oklch(0.7 0.2 160 / 0.6),
+                var(--shadow-sm);
+  }
+  40% {
+    box-shadow: 0 0 15px 5px oklch(0.7 0.2 160 / 0.3),
+                0 0 25px 10px oklch(0.7 0.2 160 / 0.15),
+                var(--shadow-md);
+  }
+  100% {
+    box-shadow: 0 0 8px 2px oklch(0.7 0.2 160 / 0.2),
+                var(--shadow-sm);
+  }
+}
+
+.animate-correct-glow {
+  animation: correct-glow 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+/* ===== 스파클 효과 (정답 시) ===== */
+@keyframes sparkle {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.sparkle {
+  position: absolute;
+  pointer-events: none;
+  animation: sparkle 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  filter: drop-shadow(0 0 3px oklch(0.85 0.15 85 / 0.8));
+}
+
+.sparkle::before,
+.sparkle::after {
+  content: '✨';
+  font-size: 18px;
+}
+
+/* ===== 페이지 전환 애니메이션 ===== */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ===== 부드러운 펄스 효과 ===== */
+@keyframes soft-pulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 2s ease-in-out infinite;
+}
+
+/* ===== 호버 리프트 효과 ===== */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ===== 버튼 프레스 효과 ===== */
+.press-effect:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
 }
