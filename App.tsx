@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { BookOpen, CheckCircle, ChevronRight, AlertTriangle, Lightbulb, Target, Shield, Users, Heart, Eye, RotateCcw, Home, List, X, Volume2, VolumeX } from 'lucide-react';
 import { SECTIONS, INTRO_CONTENT, INTERVIEW_SECTIONS, ENGLISH_DEMO_SECTIONS, POLICY_SECTIONS, POLICY_DETAILS } from './constants';
 import { InputState, STORAGE_KEY } from './types';
@@ -9,6 +9,65 @@ import { speakText, stopSpeaking, loadVoices } from './utils/tts';
 
 // Global declaration for confetti
 declare var confetti: any;
+
+// 캐릭터 경주로 컴포넌트
+interface RaceTrackProps {
+  progress: number; // 0-100
+  className?: string;
+}
+
+const RaceTrack: React.FC<RaceTrackProps> = ({ progress, className = '' }) => {
+  const isComplete = progress >= 100;
+  
+  return (
+    <div className={`flex items-center gap-3 ${className}`}>
+      {/* 경주로 */}
+      <div className="relative w-40 sm:w-56 h-9 bg-gradient-to-r from-muted/80 to-muted/60 rounded-full overflow-hidden border border-border/50 shadow-inner">
+        {/* 트랙 라인 (점선) */}
+        <div className="absolute inset-0 flex items-center justify-around px-3">
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className="w-1 h-1 bg-border/50 rounded-full" />
+          ))}
+        </div>
+        
+        {/* 진행률 바 */}
+        <div 
+          className={`absolute left-0 top-0 h-full transition-all duration-700 ease-out rounded-full ${
+            isComplete 
+              ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 shadow-lg shadow-amber-500/30' 
+              : 'bg-gradient-to-r from-primary/50 via-primary/60 to-primary/70'
+          }`}
+          style={{ width: `${Math.min(progress, 100)}%` }}
+        />
+        
+        {/* 캐릭터 (오른쪽을 바라보는 달리는 사람) */}
+        <div 
+          className="absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-out"
+          style={{ left: `calc(${Math.min(progress, 90)}% - 10px)` }}
+        >
+          <span 
+            className={`text-lg inline-block ${isComplete ? 'animate-bounce' : ''}`} 
+            style={{ transform: 'scaleX(-1)' }}
+            role="img" 
+            aria-label="runner"
+          >
+            {isComplete ? '🏆' : '🏃'}
+          </span>
+        </div>
+        
+        {/* 결승선 */}
+        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+          <span className="text-base" role="img" aria-label="finish">🏁</span>
+        </div>
+      </div>
+      
+      {/* 퍼센트 표시 */}
+      <span className={`text-sm font-bold min-w-[3rem] tabular-nums ${isComplete ? 'text-amber-500' : 'text-muted-foreground'}`}>
+        {Math.round(progress)}%
+      </span>
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const [isLandingPage, setIsLandingPage] = useState(true);
@@ -31,6 +90,39 @@ const App: React.FC = () => {
   const isTransitioningRef = useRef(false);
   // Ref to track which tabs have already triggered the completion logic to prevent loops
   const completedTabsRef = useRef<Set<number>>(new Set());
+
+  // --- 진행률 계산 ---
+  const calculateProgress = useMemo(() => {
+    const allInputs = Object.values(inputStates) as InputState[];
+    if (allInputs.length === 0) return 0;
+    
+    // 현재 활성화된 모드에 따라 해당 입력들만 필터링
+    let relevantInputs: InputState[] = [];
+    
+    if (showIntroQuiz) {
+      relevantInputs = allInputs.filter(s => s.id.startsWith('intro-'));
+    } else if (showInterview) {
+      relevantInputs = allInputs.filter(s => s.id.startsWith('interview-'));
+    } else if (showEnglishDemo) {
+      relevantInputs = allInputs.filter(s => s.id.startsWith('english-demo-'));
+    } else if (selectedPolicyDetail) {
+      relevantInputs = allInputs.filter(s => s.id.startsWith('policy-detail-'));
+    } else if (showPolicy) {
+      relevantInputs = allInputs.filter(s => s.id.startsWith('policy-'));
+    } else if (!isLandingPage) {
+      // 메인 섹션
+      relevantInputs = allInputs.filter(s => !s.id.startsWith('intro-') && 
+                                             !s.id.startsWith('interview-') && 
+                                             !s.id.startsWith('english-demo-') && 
+                                             !s.id.startsWith('policy-'));
+    }
+    
+    if (relevantInputs.length === 0) return 0;
+    
+    const completedCount = relevantInputs.filter(s => s.disabled || s.status === 'correct' || s.status === 'wrong-2').length;
+    return (completedCount / relevantInputs.length) * 100;
+  }, [inputStates, showIntroQuiz, showInterview, showEnglishDemo, showPolicy, selectedPolicyDetail, isLandingPage]);
+
 
   // --- Initialization & Parsing ---
 
@@ -1730,25 +1822,25 @@ const collectPolicyDetailInputIds = (
 
   const renderContentBlocks = () => {
     const section = SECTIONS[activeTab];
-    const commonTextClass = "text-[1.9rem] leading-[3.5rem] text-card-foreground font-medium break-keep";
+    const commonTextClass = "text-[1.8rem] leading-[3.2rem] text-card-foreground font-medium break-keep";
 
     // Layout for 'strategies': Title + Content pairs
     if (section.id === 'strategies') {
         const blocks = [];
         const icons = [
-            <Heart className="text-primary" size={32} />, 
-            <Lightbulb className="text-yellow-400" size={32} />, 
-            <Target className="text-blue-400" size={32} />, 
-            <Shield className="text-emerald-400" size={32} />, 
-            <Users className="text-purple-400" size={32} />
+            <Heart className="text-rose-500" size={28} />, 
+            <Lightbulb className="text-amber-500" size={28} />, 
+            <Target className="text-sky-500" size={28} />, 
+            <Shield className="text-emerald-500" size={28} />, 
+            <Users className="text-violet-500" size={28} />
         ];
         
         for (let i = 0; i < section.content.length; i += 2) {
-            const icon = icons[i/2] || <CheckCircle className="text-primary" size={32} />;
+            const icon = icons[i/2] || <CheckCircle className="text-primary" size={28} />;
             blocks.push(
-                <div key={i} className="bg-card p-8 rounded-3xl border border-border shadow-md hover:border-primary/50 transition-colors">
-                    <div className="flex items-start gap-4 mb-6 pb-4 border-b border-border">
-                        <div className="mt-2 shrink-0">{icon}</div>
+                <div key={i} className="bg-card/80 glass p-8 rounded-2xl border border-border/50 shadow-lg hover:shadow-xl hover:border-primary/40 transition-all duration-300 hover:translate-y-[-2px]">
+                    <div className="flex items-start gap-4 mb-6 pb-5 border-b border-border/50">
+                        <div className="mt-2 shrink-0 p-2 bg-primary/10 rounded-xl">{icon}</div>
                         <div className={`${commonTextClass} text-primary font-bold`}>
                             {renderLine(section.content[i], activeTab, i)}
                         </div>
@@ -1759,19 +1851,19 @@ const collectPolicyDetailInputIds = (
                 </div>
             );
         }
-        return <div className="space-y-8">{blocks}</div>;
+        return <div className="space-y-6">{blocks}</div>;
     }
 
     // Layout for 'vision'
     if (section.id === 'vision') {
         return (
-            <div className="bg-card p-10 rounded-3xl border border-border shadow-lg text-center">
-                <div className={`${commonTextClass} text-primary mb-6 font-bold text-[2.2rem]`}>
+            <div className="bg-card/80 glass p-10 rounded-2xl border border-border/50 shadow-xl text-center">
+                <div className={`${commonTextClass} text-primary mb-6 font-bold text-[2rem]`}>
                     {renderLine(section.content[0], activeTab, 0)}
                 </div>
-                <div className="w-24 h-1 bg-muted mx-auto my-8 rounded-full" />
-                <div className="text-left bg-muted/30 p-8 rounded-2xl">
-                    <span className="inline-block px-3 py-1 rounded bg-muted text-sm text-muted-foreground mb-4 font-bold">의미</span>
+                <div className="w-20 h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent mx-auto my-8 rounded-full" />
+                <div className="text-left bg-muted/40 p-8 rounded-xl border border-border/30">
+                    <span className="inline-block px-4 py-1.5 rounded-lg bg-primary/10 text-sm text-primary mb-4 font-bold">의미</span>
                     <div className={`${commonTextClass} text-foreground`}>
                         {renderLine(section.content[1], activeTab, 1)}
                     </div>
@@ -1783,17 +1875,17 @@ const collectPolicyDetailInputIds = (
     // Layout for 'student'
     if (section.id === 'student') {
         return (
-            <div className="flex flex-col gap-6">
-                 <div className="bg-gradient-to-br from-primary/20 to-card p-10 rounded-3xl border border-primary/30 text-center shadow-md">
-                    <div className="text-primary text-sm font-bold mb-3 uppercase tracking-widest">학습자상</div>
+            <div className="flex flex-col gap-5">
+                 <div className="bg-gradient-to-br from-primary/15 via-primary/10 to-card/80 glass p-10 rounded-2xl border border-primary/25 text-center shadow-lg">
+                    <div className="text-primary text-xs font-bold mb-4 uppercase tracking-[0.2em]">학습자상</div>
                     <div className={`${commonTextClass} text-foreground font-bold`}>
                         {renderLine(section.content[0], activeTab, 0)}
                     </div>
                 </div>
-                <div className="grid gap-4">
+                <div className="grid gap-3">
                     {section.content.slice(1).map((line, idx) => (
-                        <div key={idx+1} className="bg-card p-8 rounded-2xl border border-border flex items-start gap-6 shadow-sm">
-                            <div className="mt-5 w-3 h-3 rounded-full bg-primary shrink-0 ring-4 ring-primary/20" />
+                        <div key={idx+1} className="bg-card/80 glass p-7 rounded-xl border border-border/50 flex items-start gap-5 shadow-md hover:shadow-lg hover:border-primary/30 transition-all duration-300">
+                            <div className="mt-4 w-2.5 h-2.5 rounded-full bg-primary shrink-0 ring-4 ring-primary/15" />
                             <div className={commonTextClass}>
                                 {renderLine(line, activeTab, idx + 1)}
                             </div>
@@ -1840,24 +1932,24 @@ const collectPolicyDetailInputIds = (
         }
 
         return (
-            <div className="space-y-8">
+            <div className="space-y-6">
                 {parts.map((part, partIdx) => {
                     // 정의 부분의 [ ] 패턴 개수 계산
                     const defMatches = (part.definition.match(/\[(.*?)\]/g) || []).length;
                     
                     return (
-                        <div key={partIdx} className="bg-gradient-to-br from-card to-card/50 p-10 rounded-3xl border-2 border-primary/20 shadow-lg hover:shadow-xl hover:border-primary/40 transition-all">
+                        <div key={partIdx} className="bg-gradient-to-br from-card/90 to-card/70 glass p-9 rounded-2xl border border-primary/20 shadow-lg hover:shadow-xl hover:border-primary/35 transition-all duration-300">
                             {/* 파트 헤더 */}
-                            <div className="mb-6 pb-4 border-b-2 border-primary/30">
-                                <h3 className={`${commonTextClass} text-primary font-bold text-[2.3rem]`}>
+                            <div className="mb-6 pb-4 border-b-2 border-primary/25">
+                                <h3 className={`${commonTextClass} text-primary font-bold text-[2.1rem]`}>
                                     {renderLine(part.title, activeTab, part.titleLineIdx, 0)}
                                 </h3>
                             </div>
                             
                             {/* 정의 섹션 */}
-                            <div className="mb-6 pb-6 border-b border-border/50">
-                                <div className="inline-block px-4 py-2 mb-4 rounded-lg bg-primary/10 border border-primary/20">
-                                    <span className="text-primary font-bold text-lg">정의</span>
+                            <div className="mb-6 pb-6 border-b border-border/40">
+                                <div className="inline-block px-4 py-2 mb-4 rounded-xl bg-primary/10 border border-primary/20">
+                                    <span className="text-primary font-bold text-base">정의</span>
                                 </div>
                                 <div className={commonTextClass}>
                                     {renderLine(part.definition, activeTab, part.defLineIdx, 0)}
@@ -1866,8 +1958,8 @@ const collectPolicyDetailInputIds = (
                             
                             {/* 의의 섹션 */}
                             <div>
-                                <div className="inline-block px-4 py-2 mb-4 rounded-lg bg-primary/10 border border-primary/20">
-                                    <span className="text-primary font-bold text-lg">의의</span>
+                                <div className="inline-block px-4 py-2 mb-4 rounded-xl bg-primary/10 border border-primary/20">
+                                    <span className="text-primary font-bold text-base">의의</span>
                                 </div>
                                 <div className={commonTextClass}>
                                     {renderLine(part.meaning, activeTab, part.meanLineIdx, defMatches)}
@@ -1883,14 +1975,14 @@ const collectPolicyDetailInputIds = (
     // Layout for sections with "A: B" format (competencies, goals)
     if (section.id === 'competencies' || section.id === 'goals') {
         return (
-            <div className="space-y-6">
+            <div className="space-y-5">
                 {section.content.map((line, idx) => {
                     // "A: B" 형식을 파싱하여 키워드와 설명 분리
                     const colonIndex = line.indexOf(':');
                     if (colonIndex === -1) {
                         // 콜론이 없으면 기존 방식으로 렌더링
                         return (
-                            <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
+                            <div key={idx} className="bg-card/80 glass p-7 rounded-2xl border border-border/50 shadow-md hover:shadow-lg transition-all duration-300">
                                 <div className={commonTextClass}>
                                     {renderLine(line, activeTab, idx)}
                                 </div>
@@ -1905,9 +1997,9 @@ const collectPolicyDetailInputIds = (
                     const keywordMatches = (keyword.match(/\[(.*?)\]/g) || []).length;
                     
                     return (
-                        <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
-                            <div className="mb-4 pb-4 border-b border-border/50">
-                                <div className={`${commonTextClass} text-primary font-bold text-[2.1rem]`}>
+                        <div key={idx} className="bg-card/80 glass p-7 rounded-2xl border border-border/50 shadow-md hover:shadow-lg hover:border-primary/30 transition-all duration-300">
+                            <div className="mb-4 pb-4 border-b border-border/40">
+                                <div className={`${commonTextClass} text-primary font-bold text-[1.95rem]`}>
                                     {renderLine(keyword, activeTab, idx, 0)}
                                 </div>
                             </div>
@@ -1923,9 +2015,9 @@ const collectPolicyDetailInputIds = (
 
     // Layout for other sections (List items)
     return (
-        <div className="space-y-6">
+        <div className="space-y-5">
             {section.content.map((line, idx) => (
-                 <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
+                 <div key={idx} className="bg-card/80 glass p-7 rounded-2xl border border-border/50 shadow-md hover:shadow-lg transition-all duration-300">
                     <div className={commonTextClass}>
                         {renderLine(line, activeTab, idx)}
                     </div>
@@ -1938,39 +2030,45 @@ const collectPolicyDetailInputIds = (
   // --- VIEW: LANDING PAGE ---
   if (isLandingPage) {
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 relative overflow-hidden">
-            {/* Background decorative elements */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}} />
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 relative overflow-hidden noise-overlay">
+            {/* Background decorative elements - Enhanced */}
+            <div className="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
+                {/* Primary gradient orb */}
+                <div className="absolute top-[-20%] left-[-15%] w-[50%] h-[50%] bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-full blur-[100px] animate-soft-pulse" />
+                {/* Secondary gradient orb */}
+                <div className="absolute bottom-[-20%] right-[-15%] w-[50%] h-[50%] bg-gradient-to-tl from-secondary/25 via-accent/15 to-transparent rounded-full blur-[100px] animate-soft-pulse" style={{animationDelay: '1s'}} />
+                {/* Accent glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[40%] bg-gradient-radial from-primary/5 to-transparent rounded-full blur-[80px]" />
             </div>
 
-            <div className="max-w-2xl w-full bg-card/50 backdrop-blur-sm border border-border/50 p-10 rounded-[2.5rem] shadow-2xl text-center animate-in fade-in zoom-in duration-500">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground mb-8 shadow-lg shadow-primary/30">
-                    <BookOpen size={40} strokeWidth={2.5} />
+            <div className="max-w-2xl w-full bg-card/70 glass border border-border/40 p-12 rounded-[2rem] shadow-2xl text-center animate-fade-in-up">
+                {/* Logo with enhanced styling */}
+                <div className="inline-flex items-center justify-center w-24 h-24 rounded-[1.5rem] bg-gradient-to-br from-primary via-primary to-accent text-primary-foreground mb-10 shadow-xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-white/10" />
+                    <BookOpen size={44} strokeWidth={2} className="relative z-10" />
                 </div>
                 
-                <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 tracking-tight leading-tight">
+                <h1 className="text-4xl md:text-5xl font-extrabold text-foreground mb-5 tracking-tight leading-tight font-display">
                     2026 대구 미래역량 교육
                 </h1>
                 
-                <p className="text-xl text-muted-foreground mb-12 leading-relaxed font-medium">
+                <p className="text-lg md:text-xl text-muted-foreground mb-12 leading-relaxed font-medium max-w-md mx-auto">
                     미래를 배우고 함께 성장하는<br/>
                     대구교육의 핵심 가치를 학습해보세요.
                 </p>
                 
-                <div className="flex flex-col gap-4 items-center w-full">
+                <div className="flex flex-col gap-3 items-center w-full">
                     <button 
                         onClick={() => {
                             playSound('complete');
                             setIsLandingPage(false);
-                            setShowIntroQuiz(true); // Start Intro Quiz instead of going straight to app
+                            setShowIntroQuiz(true);
                         }}
-                        className="w-full max-w-md group relative flex items-center justify-between px-8 py-5 bg-primary hover:bg-primary/90 text-primary-foreground text-xl font-bold rounded-2xl transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/25 active:scale-95"
+                        className="w-full max-w-md group relative flex items-center justify-between px-7 py-4 bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-bold rounded-xl transition-all duration-300 hover:translate-y-[-2px] hover:shadow-xl hover:shadow-primary/30 active:translate-y-0 active:shadow-lg press-effect"
                     >
-                        <span className="flex-1 text-center">Ⅱ 대구교육의 방향</span>
-                        <div className="bg-white/20 rounded-full p-1 group-hover:translate-x-1 transition-transform">
-                            <ChevronRight size={24} />
+                        <span className="flex-1 text-center tracking-wide">Ⅱ 대구교육의 방향</span>
+                        <div className="bg-white/20 rounded-lg p-1.5 group-hover:translate-x-1 group-hover:bg-white/30 transition-all duration-300">
+                            <ChevronRight size={22} />
                         </div>
                     </button>
                     <button 
@@ -1978,11 +2076,11 @@ const collectPolicyDetailInputIds = (
                             playSound('complete');
                             setShowPolicyModal(true);
                         }}
-                        className="w-full max-w-md group relative flex items-center justify-between px-8 py-5 bg-accent hover:bg-accent/90 text-accent-foreground text-xl font-bold rounded-2xl transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-accent/25 active:scale-95"
+                        className="w-full max-w-md group relative flex items-center justify-between px-7 py-4 bg-accent hover:bg-accent/90 text-accent-foreground text-lg font-bold rounded-xl transition-all duration-300 hover:translate-y-[-2px] hover:shadow-xl hover:shadow-accent/30 active:translate-y-0 active:shadow-lg press-effect"
                     >
-                        <span className="flex-1 text-center">Ⅲ 2026 시책</span>
-                        <div className="bg-white/20 rounded-full p-1 group-hover:translate-x-1 transition-transform">
-                            <ChevronRight size={24} />
+                        <span className="flex-1 text-center tracking-wide">Ⅲ 2026 시책</span>
+                        <div className="bg-foreground/10 rounded-lg p-1.5 group-hover:translate-x-1 group-hover:bg-foreground/20 transition-all duration-300">
+                            <ChevronRight size={22} />
                         </div>
                     </button>
                     <button 
@@ -1993,11 +2091,11 @@ const collectPolicyDetailInputIds = (
                             setShowInterview(true);
                             setActiveTab(0);
                         }}
-                        className="w-full max-w-md group relative flex items-center justify-between px-8 py-5 bg-secondary hover:bg-secondary/90 text-secondary-foreground text-xl font-bold rounded-2xl transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-secondary/25 active:scale-95"
+                        className="w-full max-w-md group relative flex items-center justify-between px-7 py-4 bg-secondary hover:bg-secondary/90 text-secondary-foreground text-lg font-bold rounded-xl transition-all duration-300 hover:translate-y-[-2px] hover:shadow-xl hover:shadow-secondary/30 active:translate-y-0 active:shadow-lg press-effect"
                     >
-                        <span className="flex-1 text-center">심층면접 답안틀</span>
-                        <div className="bg-white/20 rounded-full p-1 group-hover:translate-x-1 transition-transform">
-                            <ChevronRight size={24} />
+                        <span className="flex-1 text-center tracking-wide">심층면접 답안틀</span>
+                        <div className="bg-foreground/10 rounded-lg p-1.5 group-hover:translate-x-1 group-hover:bg-foreground/20 transition-all duration-300">
+                            <ChevronRight size={22} />
                         </div>
                     </button>
                     <button 
@@ -2009,24 +2107,24 @@ const collectPolicyDetailInputIds = (
                             setShowEnglishDemo(true);
                             setActiveTab(0);
                         }}
-                        className="w-full max-w-md group relative flex items-center justify-between px-8 py-5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white text-xl font-bold rounded-2xl transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/25 active:scale-95"
+                        className="w-full max-w-md group relative flex items-center justify-between px-7 py-4 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white text-lg font-bold rounded-xl transition-all duration-300 hover:translate-y-[-2px] hover:shadow-xl hover:shadow-violet-500/30 active:translate-y-0 active:shadow-lg press-effect"
                     >
-                        <span className="flex-1 text-center">영어 답안틀</span>
-                        <div className="bg-white/20 rounded-full p-1 group-hover:translate-x-1 transition-transform">
-                            <ChevronRight size={24} />
+                        <span className="flex-1 text-center tracking-wide">영어 답안틀</span>
+                        <div className="bg-white/20 rounded-lg p-1.5 group-hover:translate-x-1 group-hover:bg-white/30 transition-all duration-300">
+                            <ChevronRight size={22} />
                         </div>
                     </button>
                 </div>
             </div>
             
-            <div className="absolute bottom-8 text-muted-foreground text-sm font-medium opacity-60">
+            <div className="absolute bottom-8 text-muted-foreground text-sm font-medium opacity-50 tracking-wide">
                 Daegu Metropolitan Office of Education
             </div>
 
-            {/* Policy Modal */}
+            {/* Policy Modal - Enhanced */}
             {showPolicyModal && (
                 <div 
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 glass animate-in fade-in duration-300"
                     onClick={(e) => {
                         if (e.target === e.currentTarget) {
                             playSound('complete');
@@ -2035,24 +2133,24 @@ const collectPolicyDetailInputIds = (
                     }}
                 >
                     <div 
-                        className="bg-card border border-border rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in zoom-in slide-in-from-bottom-4 duration-300"
+                        className="bg-card/95 glass border border-border/50 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto animate-fade-in-up"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="sticky top-0 bg-card border-b border-border p-6 flex items-center justify-between rounded-t-3xl">
-                            <h2 className="text-2xl font-bold text-foreground">2026 시책</h2>
+                        <div className="sticky top-0 bg-card/95 glass border-b border-border/50 px-6 py-5 flex items-center justify-between rounded-t-2xl z-10">
+                            <h2 className="text-2xl font-bold text-foreground tracking-tight">2026 시책</h2>
                             <button
                                 onClick={() => {
                                     playSound('complete');
                                     setShowPolicyModal(false);
                                 }}
-                                className="p-2 hover:bg-muted rounded-lg transition-colors"
+                                className="p-2.5 hover:bg-muted rounded-xl transition-all duration-200 hover:rotate-90"
                                 aria-label="닫기"
                             >
-                                <X size={24} className="text-muted-foreground" />
+                                <X size={22} className="text-muted-foreground" />
                             </button>
                         </div>
                         
-                        <div className="p-6 space-y-3">
+                        <div className="p-5 space-y-2.5">
                             <button
                                 onClick={() => {
                                     playSound('complete');
@@ -2064,16 +2162,16 @@ const collectPolicyDetailInputIds = (
                                     setShowInterview(false);
                                     setShowPolicy(false);
                                 }}
-                                className="w-full text-left p-6 bg-gradient-to-r from-pink-500/10 to-rose-500/10 hover:from-pink-500/20 hover:to-rose-500/20 border border-pink-500/20 hover:border-pink-500/40 rounded-2xl transition-all hover:scale-[1.02] hover:shadow-lg group"
+                                className="w-full text-left p-5 bg-gradient-to-r from-rose-500/8 to-pink-500/8 hover:from-rose-500/15 hover:to-pink-500/15 border border-rose-500/15 hover:border-rose-500/30 rounded-xl transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg hover:shadow-rose-500/10 group"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-pink-500/20 p-3 rounded-xl group-hover:bg-pink-500/30 transition-colors">
-                                        <Heart className="text-pink-500" size={24} />
+                                    <div className="bg-gradient-to-br from-rose-500/25 to-pink-500/25 p-3.5 rounded-xl group-hover:from-rose-500/35 group-hover:to-pink-500/35 transition-all duration-300 shadow-sm">
+                                        <Heart className="text-rose-500" size={22} />
                                     </div>
-                                    <span className="text-lg font-bold text-foreground flex-1">
+                                    <span className="text-base font-semibold text-foreground flex-1 leading-relaxed">
                                         1. 따뜻한 마음을 키워 올바른 인성을 기르겠습니다.
                                     </span>
-                                    <ChevronRight className="text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" size={20} />
+                                    <ChevronRight className="text-muted-foreground group-hover:text-rose-500 group-hover:translate-x-1 transition-all duration-300" size={20} />
                                 </div>
                             </button>
 
@@ -2088,16 +2186,16 @@ const collectPolicyDetailInputIds = (
                                     setShowInterview(false);
                                     setShowPolicy(false);
                                 }}
-                                className="w-full text-left p-6 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 hover:from-yellow-500/20 hover:to-amber-500/20 border border-yellow-500/20 hover:border-yellow-500/40 rounded-2xl transition-all hover:scale-[1.02] hover:shadow-lg group"
+                                className="w-full text-left p-5 bg-gradient-to-r from-amber-500/8 to-yellow-500/8 hover:from-amber-500/15 hover:to-yellow-500/15 border border-amber-500/15 hover:border-amber-500/30 rounded-xl transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg hover:shadow-amber-500/10 group"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-yellow-500/20 p-3 rounded-xl group-hover:bg-yellow-500/30 transition-colors">
-                                        <Lightbulb className="text-yellow-500" size={24} />
+                                    <div className="bg-gradient-to-br from-amber-500/25 to-yellow-500/25 p-3.5 rounded-xl group-hover:from-amber-500/35 group-hover:to-yellow-500/35 transition-all duration-300 shadow-sm">
+                                        <Lightbulb className="text-amber-500" size={22} />
                                     </div>
-                                    <span className="text-lg font-bold text-foreground flex-1">
+                                    <span className="text-base font-semibold text-foreground flex-1 leading-relaxed">
                                         2. 학습역량을 높여 모두의 성장을 돕겠습니다.
                                     </span>
-                                    <ChevronRight className="text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" size={20} />
+                                    <ChevronRight className="text-muted-foreground group-hover:text-amber-500 group-hover:translate-x-1 transition-all duration-300" size={20} />
                                 </div>
                             </button>
 
@@ -2112,16 +2210,16 @@ const collectPolicyDetailInputIds = (
                                     setShowInterview(false);
                                     setShowPolicy(false);
                                 }}
-                                className="w-full text-left p-6 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 hover:from-blue-500/20 hover:to-cyan-500/20 border border-blue-500/20 hover:border-blue-500/40 rounded-2xl transition-all hover:scale-[1.02] hover:shadow-lg group"
+                                className="w-full text-left p-5 bg-gradient-to-r from-sky-500/8 to-blue-500/8 hover:from-sky-500/15 hover:to-blue-500/15 border border-sky-500/15 hover:border-sky-500/30 rounded-xl transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg hover:shadow-sky-500/10 group"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-blue-500/20 p-3 rounded-xl group-hover:bg-blue-500/30 transition-colors">
-                                        <Target className="text-blue-500" size={24} />
+                                    <div className="bg-gradient-to-br from-sky-500/25 to-blue-500/25 p-3.5 rounded-xl group-hover:from-sky-500/35 group-hover:to-blue-500/35 transition-all duration-300 shadow-sm">
+                                        <Target className="text-sky-500" size={22} />
                                     </div>
-                                    <span className="text-lg font-bold text-foreground flex-1">
+                                    <span className="text-base font-semibold text-foreground flex-1 leading-relaxed">
                                         3. 더 넓고 두터운 지원으로 모두의 가능성을 열겠습니다.
                                     </span>
-                                    <ChevronRight className="text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" size={20} />
+                                    <ChevronRight className="text-muted-foreground group-hover:text-sky-500 group-hover:translate-x-1 transition-all duration-300" size={20} />
                                 </div>
                             </button>
 
@@ -2136,16 +2234,16 @@ const collectPolicyDetailInputIds = (
                                     setShowInterview(false);
                                     setShowPolicy(false);
                                 }}
-                                className="w-full text-left p-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border border-emerald-500/20 hover:border-emerald-500/40 rounded-2xl transition-all hover:scale-[1.02] hover:shadow-lg group"
+                                className="w-full text-left p-5 bg-gradient-to-r from-emerald-500/8 to-teal-500/8 hover:from-emerald-500/15 hover:to-teal-500/15 border border-emerald-500/15 hover:border-emerald-500/30 rounded-xl transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg hover:shadow-emerald-500/10 group"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-emerald-500/20 p-3 rounded-xl group-hover:bg-emerald-500/30 transition-colors">
-                                        <Shield className="text-emerald-500" size={24} />
+                                    <div className="bg-gradient-to-br from-emerald-500/25 to-teal-500/25 p-3.5 rounded-xl group-hover:from-emerald-500/35 group-hover:to-teal-500/35 transition-all duration-300 shadow-sm">
+                                        <Shield className="text-emerald-500" size={22} />
                                     </div>
-                                    <span className="text-lg font-bold text-foreground flex-1">
+                                    <span className="text-base font-semibold text-foreground flex-1 leading-relaxed">
                                         4. 학교의 안전을 채워 건강한 성장을 지원하겠습니다.
                                     </span>
-                                    <ChevronRight className="text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" size={20} />
+                                    <ChevronRight className="text-muted-foreground group-hover:text-emerald-500 group-hover:translate-x-1 transition-all duration-300" size={20} />
                                 </div>
                             </button>
 
@@ -2161,16 +2259,16 @@ const collectPolicyDetailInputIds = (
                                     setShowPolicy(true);
                                     setActiveTab(0);
                                 }}
-                                className="w-full text-left p-6 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 hover:from-purple-500/20 hover:to-indigo-500/20 border border-purple-500/20 hover:border-purple-500/40 rounded-2xl transition-all hover:scale-[1.02] hover:shadow-lg group"
+                                className="w-full text-left p-5 bg-gradient-to-r from-violet-500/8 to-purple-500/8 hover:from-violet-500/15 hover:to-purple-500/15 border border-violet-500/15 hover:border-violet-500/30 rounded-xl transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg hover:shadow-violet-500/10 group"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-purple-500/20 p-3 rounded-xl group-hover:bg-purple-500/30 transition-colors">
-                                        <Users className="text-purple-500" size={24} />
+                                    <div className="bg-gradient-to-br from-violet-500/25 to-purple-500/25 p-3.5 rounded-xl group-hover:from-violet-500/35 group-hover:to-purple-500/35 transition-all duration-300 shadow-sm">
+                                        <Users className="text-violet-500" size={22} />
                                     </div>
-                                    <span className="text-lg font-bold text-foreground flex-1">
+                                    <span className="text-base font-semibold text-foreground flex-1 leading-relaxed">
                                         5. 교육공동체가 힘을 모아 배움의 장을 넓히겠습니다.
                                     </span>
-                                    <ChevronRight className="text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" size={20} />
+                                    <ChevronRight className="text-muted-foreground group-hover:text-violet-500 group-hover:translate-x-1 transition-all duration-300" size={20} />
                                 </div>
                             </button>
                         </div>
@@ -2184,21 +2282,23 @@ const collectPolicyDetailInputIds = (
   // --- VIEW: INTRO QUIZ ---
   if (showIntroQuiz) {
       return (
-        <div className="min-h-screen flex flex-col items-center pb-20 bg-background">
-            <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
+        <div className="min-h-screen flex flex-col items-center pb-20 bg-background noise-overlay">
+            <header className="w-full max-w-5xl px-6 py-4 flex items-center justify-between border-b border-border/50 bg-card/80 glass sticky top-0 z-50">
                  <button 
                     onClick={resetToInitialState}
-                    className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                    className="flex items-center gap-3 hover:opacity-80 transition-all duration-200 group"
                 >
-                    <div className="bg-primary p-2 rounded-lg">
-                        <BookOpen className="w-6 h-6 text-primary-foreground" />
+                    <div className="bg-gradient-to-br from-primary to-primary/80 p-2.5 rounded-xl shadow-md group-hover:shadow-lg transition-shadow">
+                        <BookOpen className="w-5 h-5 text-primary-foreground" />
                     </div>
-                    <h1 className="text-xl font-bold text-foreground">2026 대구 미래역량 교육</h1>
+                    <h1 className="text-lg font-bold text-foreground tracking-tight">2026 대구 미래역량 교육</h1>
                 </button>
-                 <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-3">
+                     {/* 캐릭터 경주로 */}
+                     <RaceTrack progress={calculateProgress} />
                      <button 
                         onClick={revealAllAnswers}
-                        className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground text-sm font-medium transition-colors"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-secondary hover:bg-secondary/80 rounded-xl text-secondary-foreground text-sm font-semibold transition-all duration-200 hover:shadow-md press-effect"
                     >
                         <Eye size={18} />
                         <span className="hidden sm:inline">정답 보기</span>
@@ -2206,19 +2306,19 @@ const collectPolicyDetailInputIds = (
                  </div>
             </header>
             
-            <main className="w-full max-w-3xl p-6 md:p-12 flex-1 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <div className="bg-card p-10 rounded-[2.5rem] border border-border shadow-xl w-full text-center">
-                    <div className="mb-8 flex flex-col items-center">
-                        <div className="bg-secondary p-4 rounded-full mb-4 text-secondary-foreground">
-                            <List size={32} />
+            <main className="w-full max-w-3xl p-6 md:p-12 flex-1 flex flex-col items-center justify-center animate-fade-in-up">
+                <div className="bg-card/80 glass p-10 rounded-2xl border border-border/50 shadow-xl w-full text-center">
+                    <div className="mb-10 flex flex-col items-center">
+                        <div className="bg-gradient-to-br from-secondary to-secondary/80 p-4 rounded-2xl mb-5 text-secondary-foreground shadow-lg">
+                            <List size={30} />
                         </div>
-                        <h2 className="text-3xl font-bold text-foreground mb-2">목차 학습</h2>
-                        <p className="text-muted-foreground">빈칸을 채워 대구교육의 방향 목차를 완성하세요.</p>
+                        <h2 className="text-3xl font-bold text-foreground mb-3 tracking-tight">목차 학습</h2>
+                        <p className="text-muted-foreground text-lg">빈칸을 채워 대구교육의 방향 목차를 완성하세요.</p>
                     </div>
                     
-                    <div className="space-y-4 text-left inline-block">
+                    <div className="space-y-3 text-left inline-block">
                         {INTRO_CONTENT.map((line, idx) => (
-                            <div key={idx} className="text-[1.9rem] leading-[3.5rem] font-bold text-card-foreground pl-4 border-l-4 border-primary/20 hover:border-primary transition-colors">
+                            <div key={idx} className="text-[1.8rem] leading-[3.2rem] font-bold text-card-foreground pl-5 border-l-[3px] border-primary/25 hover:border-primary hover:bg-primary/5 rounded-r-lg transition-all duration-200 py-1">
                                 {renderLine(line, 'intro', idx)}
                             </div>
                         ))}
@@ -2227,9 +2327,9 @@ const collectPolicyDetailInputIds = (
             </main>
             
             {showToast && (
-                <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-8 py-4 rounded-full shadow-2xl shadow-primary/30 flex items-center gap-4 z-50 animate-bounce-gentle">
-                    <div className="bg-white/20 p-1 rounded-full"><CheckCircle size={24} /></div>
-                    <span className="text-xl font-bold">{showToast.message}</span>
+                <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground px-8 py-4 rounded-2xl shadow-2xl shadow-primary/40 flex items-center gap-4 z-50 animate-fade-in-up glass">
+                    <div className="bg-white/20 p-1.5 rounded-xl"><CheckCircle size={22} /></div>
+                    <span className="text-lg font-bold tracking-wide">{showToast.message}</span>
                 </div>
             )}
         </div>
@@ -2397,35 +2497,35 @@ const collectPolicyDetailInputIds = (
     };
 
     return (
-      <div className="min-h-screen flex flex-col items-center pb-20 bg-background">
+      <div className="min-h-screen flex flex-col items-center pb-20 bg-background noise-overlay">
         {/* Header */}
-        <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
+        <header className="w-full max-w-5xl px-6 py-4 flex items-center justify-between border-b border-border/50 bg-card/80 glass sticky top-0 z-50">
           <button 
             onClick={() => {
-              // 답안 초기화 (오답 이력은 유지)
               setInputStates(parseAndInitContent());
               setSelectedPolicyDetail(null);
               setActivePolicyTab(0);
               setIsLandingPage(true);
             }}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 hover:opacity-80 transition-all duration-200 group"
             title="첫 화면으로"
           >
-            <div className="bg-primary p-2 rounded-lg">
-              <BookOpen className="w-6 h-6 text-primary-foreground" />
+            <div className="bg-gradient-to-br from-primary to-primary/80 p-2.5 rounded-xl shadow-md group-hover:shadow-lg transition-shadow">
+              <BookOpen className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">2026 시책</h1>
+            <h1 className="text-lg font-bold text-foreground tracking-tight">2026 시책</h1>
           </button>
           <div className="flex items-center gap-3 sm:gap-4">
+            <RaceTrack progress={calculateProgress} />
             {wrongHistory.size > 0 && (
-              <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-full border border-destructive/20 text-destructive text-sm font-medium animate-pulse">
-                <AlertTriangle size={16} />
+              <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-xl border border-destructive/20 text-destructive text-sm font-medium animate-soft-pulse">
+                <AlertTriangle size={15} />
                 <span>복습: {wrongHistory.size}</span>
               </div>
             )}
             <button 
               onClick={revealAllAnswers}
-              className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-secondary hover:bg-secondary/80 rounded-xl text-secondary-foreground text-sm font-semibold transition-all duration-200 hover:shadow-md press-effect"
               title="정답 보기"
             >
               <Eye size={18} />
@@ -2436,13 +2536,13 @@ const collectPolicyDetailInputIds = (
 
         {/* Main Content */}
         <main className="w-full max-w-4xl p-6 md:p-12 flex-1">
-          <div className="bg-card p-8 md:p-12 rounded-3xl border border-border shadow-lg">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-8 pb-4 border-b-2 border-primary/30 whitespace-nowrap overflow-hidden text-ellipsis">
+          <div className="bg-card/80 glass p-8 md:p-10 rounded-2xl border border-border/50 shadow-xl">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-8 pb-4 border-b-2 border-primary/25 whitespace-nowrap overflow-hidden text-ellipsis tracking-tight">
               {policyDetail.title}
             </h2>
             
             {/* Tabs */}
-            <div className="flex flex-wrap gap-3 mb-8 justify-center">
+            <div className="flex flex-wrap gap-2 mb-8 justify-center">
               {topLevelItems.map((item, idx) => {
                 const isCurrent = idx === activePolicyTab;
                 return (
@@ -2450,10 +2550,10 @@ const collectPolicyDetailInputIds = (
                     key={idx}
                     onClick={() => setActivePolicyTab(idx)}
                     className={`
-                      px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 border
+                      px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 border press-effect
                       ${isCurrent 
-                        ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105' 
-                        : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'}
+                        ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25 scale-[1.03]' 
+                        : 'bg-secondary/70 text-secondary-foreground border-transparent hover:bg-secondary hover:shadow-md'}
                     `}
                   >
                     {item.title}
@@ -2463,7 +2563,7 @@ const collectPolicyDetailInputIds = (
             </div>
 
             {/* Tab Content */}
-            <div className="mt-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="mt-8 animate-fade-in-up">
               {selectedItem && selectedItem.children && renderHierarchy(selectedItem.children)}
             </div>
           </div>
@@ -2471,9 +2571,9 @@ const collectPolicyDetailInputIds = (
 
         {/* Toast Notification */}
         {showToast && (
-          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-8 py-4 rounded-full shadow-2xl shadow-primary/30 flex items-center gap-4 z-50 animate-bounce-gentle">
-            <div className="bg-white/20 p-1 rounded-full"><CheckCircle size={24} /></div>
-            <span className="text-xl font-bold">{showToast.message}</span>
+          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground px-8 py-4 rounded-2xl shadow-2xl shadow-primary/40 flex items-center gap-4 z-50 animate-fade-in-up glass">
+            <div className="bg-white/20 p-1.5 rounded-xl"><CheckCircle size={22} /></div>
+            <span className="text-lg font-bold tracking-wide">{showToast.message}</span>
           </div>
         )}
       </div>
@@ -2484,12 +2584,12 @@ const collectPolicyDetailInputIds = (
   if (showPolicy) {
     const renderPolicyContentBlocks = () => {
       const section = POLICY_SECTIONS[activeTab];
-      const commonTextClass = "text-[1.9rem] leading-[3.5rem] text-card-foreground font-medium break-keep";
+      const commonTextClass = "text-[1.8rem] leading-[3.2rem] text-card-foreground font-medium break-keep";
 
       return (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {section.content.map((line, idx) => (
-            <div key={idx} className="bg-card p-8 rounded-3xl border border-border shadow-md">
+            <div key={idx} className="bg-card/80 glass p-7 rounded-2xl border border-border/50 shadow-md hover:shadow-lg transition-all duration-300">
               <div className={commonTextClass}>
                 {renderLine(line, activeTab, idx, 0, false, false, true)}
               </div>
@@ -2500,29 +2600,30 @@ const collectPolicyDetailInputIds = (
     };
 
     return (
-      <div className="min-h-screen flex flex-col items-center pb-20 bg-background">
+      <div className="min-h-screen flex flex-col items-center pb-20 bg-background noise-overlay">
         {/* Header */}
-        <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
+        <header className="w-full max-w-5xl px-6 py-4 flex items-center justify-between border-b border-border/50 bg-card/80 glass sticky top-0 z-50">
           <button 
             onClick={resetToInitialState}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 hover:opacity-80 transition-all duration-200 group"
             title="첫 화면으로"
           >
-            <div className="bg-primary p-2 rounded-lg">
-              <BookOpen className="w-6 h-6 text-primary-foreground" />
+            <div className="bg-gradient-to-br from-primary to-primary/80 p-2.5 rounded-xl shadow-md group-hover:shadow-lg transition-shadow">
+              <BookOpen className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">2026 시책</h1>
+            <h1 className="text-lg font-bold text-foreground tracking-tight">2026 시책</h1>
           </button>
           <div className="flex items-center gap-3 sm:gap-4">
+            <RaceTrack progress={calculateProgress} />
             {wrongHistory.size > 0 && (
-              <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-full border border-destructive/20 text-destructive text-sm font-medium animate-pulse">
-                <AlertTriangle size={16} />
+              <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-xl border border-destructive/20 text-destructive text-sm font-medium animate-soft-pulse">
+                <AlertTriangle size={15} />
                 <span>복습: {wrongHistory.size}</span>
               </div>
             )}
             <button 
               onClick={revealAllAnswers}
-              className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-secondary hover:bg-secondary/80 rounded-xl text-secondary-foreground text-sm font-semibold transition-all duration-200 hover:shadow-md press-effect"
               title="정답 보기"
             >
               <Eye size={18} />
@@ -3211,29 +3312,30 @@ const collectPolicyDetailInputIds = (
     };
 
     return (
-      <div className="min-h-screen flex flex-col items-center pb-20 bg-background">
+      <div className="min-h-screen flex flex-col items-center pb-20 bg-background noise-overlay">
         {/* Header */}
-        <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
+        <header className="w-full max-w-5xl px-6 py-4 flex items-center justify-between border-b border-border/50 bg-card/80 glass sticky top-0 z-50">
           <button 
             onClick={resetToInitialState}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 hover:opacity-80 transition-all duration-200 group"
             title="첫 화면으로"
           >
-            <div className="bg-primary p-2 rounded-lg">
-              <BookOpen className="w-6 h-6 text-primary-foreground" />
+            <div className="bg-gradient-to-br from-violet-500 to-purple-600 p-2.5 rounded-xl shadow-md group-hover:shadow-lg transition-shadow">
+              <BookOpen className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">영어 답안틀</h1>
+            <h1 className="text-lg font-bold text-foreground tracking-tight">영어 답안틀</h1>
           </button>
           <div className="flex items-center gap-3 sm:gap-4">
+            <RaceTrack progress={calculateProgress} />
             {wrongHistory.size > 0 && (
-              <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-full border border-destructive/20 text-destructive text-sm font-medium animate-pulse">
-                <AlertTriangle size={16} />
+              <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-xl border border-destructive/20 text-destructive text-sm font-medium animate-soft-pulse">
+                <AlertTriangle size={15} />
                 <span>복습: {wrongHistory.size}</span>
               </div>
             )}
             <button 
               onClick={revealAllAnswers}
-              className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-secondary hover:bg-secondary/80 rounded-xl text-secondary-foreground text-sm font-semibold transition-all duration-200 hover:shadow-md press-effect"
               title="정답 보기"
             >
               <Eye size={18} />
@@ -3247,18 +3349,15 @@ const collectPolicyDetailInputIds = (
           
           {/* Main Tabs (도입, Activity 1, Activity 2, Activity 3, 활동 마무리, 정리) */}
           {ENGLISH_DEMO_SECTIONS.length > 1 && (
-            <div className="flex flex-wrap gap-3 mb-12 justify-center items-center">
+            <div className="flex flex-wrap gap-2 mb-10 justify-center items-center">
               {ENGLISH_DEMO_SECTIONS.map((sec, idx) => {
                 const isCurrent = idx === activeTab;
                 const sectionIds = Object.keys(inputStates).filter(k => k.startsWith(`english-demo-${idx}-`));
                 const isDone = sectionIds.length > 0 && sectionIds.every(id => inputStates[id].status === 'correct' || inputStates[id].status === 'wrong-2');
                 
-                // '정리' 탭인지 확인
                 const isConclusionTab = sec.id === 'conclusion';
-                // '면접' 탭인지 확인
                 const isInterviewTab = sec.id === 'interview';
 
-                // '면접' 탭은 별도로 렌더링하지 않음 (나중에 별도로 렌더링)
                 if (isInterviewTab) {
                   return null;
                 }
@@ -3268,22 +3367,21 @@ const collectPolicyDetailInputIds = (
                     <button
                       onClick={() => {
                         setActiveTab(idx);
-                        setActiveSkillTab('listening'); // 탭 변경 시 서브탭 초기화
+                        setActiveSkillTab('listening');
                       }}
                       className={`
-                        px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 border
+                        px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 border press-effect
                         ${isCurrent 
-                          ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105' 
-                          : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'}
-                        ${isDone && !isCurrent ? 'border-primary/50 text-primary bg-primary/10' : ''}
+                          ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25 scale-[1.03]' 
+                          : 'bg-secondary/70 text-secondary-foreground border-transparent hover:bg-secondary hover:shadow-md'}
+                        ${isDone && !isCurrent ? 'border-primary/40 text-primary bg-primary/8' : ''}
                       `}
                     >
-                      {isDone && <CheckCircle size={14} />}
+                      {isDone && <CheckCircle size={14} className="text-emerald-500" />}
                       {sec.title}
                     </button>
-                    {/* '정리' 탭 오른쪽에 세로선 추가 */}
                     {isConclusionTab && (
-                      <div className="h-8 w-px bg-border mx-2"></div>
+                      <div className="h-6 w-px bg-border/60 mx-2"></div>
                     )}
                   </React.Fragment>
                 );
@@ -3302,14 +3400,14 @@ const collectPolicyDetailInputIds = (
                   <button
                     onClick={() => {
                       setActiveTab(interviewIdx);
-                      setActiveSkillTab('listening'); // 탭 변경 시 서브탭 초기화
+                      setActiveSkillTab('listening');
                     }}
                     className={`
-                      px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 border
+                      px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 border press-effect
                       ${isCurrent 
-                        ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105' 
-                        : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'}
-                      ${isDone && !isCurrent ? 'border-primary/50 text-primary bg-primary/10' : ''}
+                        ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25 scale-[1.03]' 
+                        : 'bg-secondary/70 text-secondary-foreground border-transparent hover:bg-secondary hover:shadow-md'}
+                      ${isDone && !isCurrent ? 'border-primary/40 text-primary bg-primary/8' : ''}
                     `}
                   >
                     {isDone && <CheckCircle size={14} />}
@@ -3464,29 +3562,30 @@ const collectPolicyDetailInputIds = (
     };
 
     return (
-      <div className="min-h-screen flex flex-col items-center pb-20 bg-background">
+      <div className="min-h-screen flex flex-col items-center pb-20 bg-background noise-overlay">
         {/* Header */}
-        <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
+        <header className="w-full max-w-5xl px-6 py-4 flex items-center justify-between border-b border-border/50 bg-card/80 glass sticky top-0 z-50">
           <button 
             onClick={resetToInitialState}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 hover:opacity-80 transition-all duration-200 group"
             title="첫 화면으로"
           >
-            <div className="bg-primary p-2 rounded-lg">
-              <BookOpen className="w-6 h-6 text-primary-foreground" />
+            <div className="bg-gradient-to-br from-primary to-primary/80 p-2.5 rounded-xl shadow-md group-hover:shadow-lg transition-shadow">
+              <BookOpen className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">심층면접 답안틀</h1>
+            <h1 className="text-lg font-bold text-foreground tracking-tight">심층면접 답안틀</h1>
           </button>
           <div className="flex items-center gap-3 sm:gap-4">
+            <RaceTrack progress={calculateProgress} />
             {wrongHistory.size > 0 && (
-              <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-full border border-destructive/20 text-destructive text-sm font-medium animate-pulse">
-                <AlertTriangle size={16} />
+              <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-xl border border-destructive/20 text-destructive text-sm font-medium animate-soft-pulse">
+                <AlertTriangle size={15} />
                 <span>복습: {wrongHistory.size}</span>
               </div>
             )}
             <button 
               onClick={revealAllAnswers}
-              className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-secondary hover:bg-secondary/80 rounded-xl text-secondary-foreground text-sm font-semibold transition-all duration-200 hover:shadow-md press-effect"
               title="정답 보기"
             >
               <Eye size={18} />
@@ -3497,60 +3596,49 @@ const collectPolicyDetailInputIds = (
 
         {/* Main Content */}
         <main className="w-full max-w-4xl p-6 md:p-12 flex-1">
-          
           {/* Dynamic Content Block Render */}
-          <div id={`tab-content-${activeTab}`} className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
+          <div id={`tab-content-${activeTab}`} className="w-full animate-fade-in-up">
             {renderInterviewContentBlocks()}
           </div>
-
         </main>
 
         {/* Toast Notification */}
         {showToast && (
-          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-8 py-4 rounded-full shadow-2xl shadow-primary/30 flex items-center gap-4 z-50 animate-bounce-gentle">
-            <div className="bg-white/20 p-1 rounded-full"><CheckCircle size={24} /></div>
-            <span className="text-xl font-bold">{showToast.message}</span>
+          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground px-8 py-4 rounded-2xl shadow-2xl shadow-primary/40 flex items-center gap-4 z-50 animate-fade-in-up glass">
+            <div className="bg-white/20 p-1.5 rounded-xl"><CheckCircle size={22} /></div>
+            <span className="text-lg font-bold tracking-wide">{showToast.message}</span>
           </div>
         )}
-        
-        <style>{`
-          @keyframes bounce-gentle {
-              0%, 100% { transform: translate(-50%, 0); }
-              50% { transform: translate(-50%, -10px); }
-          }
-          .animate-bounce-gentle {
-              animation: bounce-gentle 2s infinite;
-          }
-        `}</style>
       </div>
     );
   }
 
   // --- VIEW: MAIN LEARNING APP ---
   return (
-    <div className="min-h-screen flex flex-col items-center pb-20 bg-background">
+    <div className="min-h-screen flex flex-col items-center pb-20 bg-background noise-overlay">
       {/* Header */}
-      <header className="w-full max-w-5xl p-6 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
+      <header className="w-full max-w-5xl px-6 py-4 flex items-center justify-between border-b border-border/50 bg-card/80 glass sticky top-0 z-50">
         <button 
             onClick={resetToInitialState}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 hover:opacity-80 transition-all duration-200 group"
             title="첫 화면으로"
         >
-          <div className="bg-primary p-2 rounded-lg">
-             <BookOpen className="w-6 h-6 text-primary-foreground" />
+          <div className="bg-gradient-to-br from-primary to-primary/80 p-2.5 rounded-xl shadow-md group-hover:shadow-lg transition-shadow">
+             <BookOpen className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">2026 대구 미래역량 교육</h1>
+          <h1 className="text-lg font-bold text-foreground tracking-tight">2026 대구 미래역량 교육</h1>
         </button>
         <div className="flex items-center gap-3 sm:gap-4">
+            <RaceTrack progress={calculateProgress} />
             {wrongHistory.size > 0 && (
-                <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-full border border-destructive/20 text-destructive text-sm font-medium animate-pulse">
-                    <AlertTriangle size={16} />
+                <div className="hidden sm:flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-xl border border-destructive/20 text-destructive text-sm font-medium animate-soft-pulse">
+                    <AlertTriangle size={15} />
                     <span>복습: {wrongHistory.size}</span>
                 </div>
             )}
             <button 
                 onClick={revealAllAnswers}
-                className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-secondary hover:bg-secondary/80 rounded-xl text-secondary-foreground text-sm font-semibold transition-all duration-200 hover:shadow-md press-effect"
                 title="정답 보기"
             >
                 <Eye size={18} />
@@ -3562,8 +3650,8 @@ const collectPolicyDetailInputIds = (
       {/* Main Content */}
       <main className="w-full max-w-4xl p-6 md:p-12 flex-1">
         
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-3 mb-12 justify-center">
+        {/* Tabs - Refined pill style */}
+        <div className="flex flex-wrap gap-2 mb-10 justify-center">
           {SECTIONS.map((section, idx) => {
               const isCurrent = idx === activeTab;
               const sectionIds = Object.keys(inputStates).filter(k => k.startsWith(`${idx}-`));
@@ -3574,14 +3662,15 @@ const collectPolicyDetailInputIds = (
                     key={section.id}
                     onClick={() => setActiveTab(idx)}
                     className={`
-                        px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 border
+                        px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 border
                         ${isCurrent 
-                            ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105' 
-                            : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'}
-                        ${isDone && !isCurrent ? 'border-primary/50 text-primary bg-primary/10' : ''}
+                            ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25 scale-[1.03]' 
+                            : 'bg-secondary/70 text-secondary-foreground border-transparent hover:bg-secondary hover:shadow-md'}
+                        ${isDone && !isCurrent ? 'border-primary/40 text-primary bg-primary/8' : ''}
+                        press-effect
                     `}
                 >
-                    {isDone && <CheckCircle size={14} />}
+                    {isDone && <CheckCircle size={14} className="text-emerald-500" />}
                     {section.title}
                 </button>
               );
@@ -3589,7 +3678,7 @@ const collectPolicyDetailInputIds = (
         </div>
 
         {/* Dynamic Content Block Render */}
-        <div id={`tab-content-${activeTab}`} className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
+        <div id={`tab-content-${activeTab}`} className="w-full animate-fade-in-up">
              {renderContentBlocks()}
         </div>
 
@@ -3597,21 +3686,11 @@ const collectPolicyDetailInputIds = (
 
       {/* Toast Notification */}
       {showToast && (
-        <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-8 py-4 rounded-full shadow-2xl shadow-primary/30 flex items-center gap-4 z-50 animate-bounce-gentle">
-            <div className="bg-white/20 p-1 rounded-full"><CheckCircle size={24} /></div>
-            <span className="text-xl font-bold">{showToast.message}</span>
+        <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground px-8 py-4 rounded-2xl shadow-2xl shadow-primary/40 flex items-center gap-4 z-50 animate-fade-in-up glass">
+            <div className="bg-white/20 p-1.5 rounded-xl"><CheckCircle size={22} /></div>
+            <span className="text-lg font-bold tracking-wide">{showToast.message}</span>
         </div>
       )}
-      
-      <style>{`
-        @keyframes bounce-gentle {
-            0%, 100% { transform: translate(-50%, 0); }
-            50% { transform: translate(-50%, -10px); }
-        }
-        .animate-bounce-gentle {
-            animation: bounce-gentle 2s infinite;
-        }
-      `}</style>
     </div>
   );
 };
