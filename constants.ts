@@ -761,7 +761,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
                       { title: '학생 상담, 위기학생 진단-상담-치유 One-Stop서비스' }
                     ]
                   },
-                  { title: '학생 [심리정서회복] [다품사업] 지원' },
+                  { title: '[다품]사업 지원 for 학생 [심리정서회복]' },
                   { title: '교육청 [사이버 상담실] 운영' },
                   { title: '[또래활동] 프로그램 운영(초)' }
                 ]
