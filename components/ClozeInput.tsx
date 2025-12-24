@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, KeyboardEvent } from 'react';
+import React, { useRef, useEffect, KeyboardEvent, useState } from 'react';
 import { InputState } from '../types';
 
 interface ClozeInputProps {
@@ -11,6 +11,18 @@ interface ClozeInputProps {
   isCompact?: boolean; // 표 안에서 사용하는 컴팩트 모드
 }
 
+// 스파클 효과 컴포넌트
+const Sparkle: React.FC<{ x: number; y: number; delay: number }> = ({ x, y, delay }) => (
+  <div 
+    className="sparkle" 
+    style={{ 
+      left: `${x}%`, 
+      top: `${y}%`,
+      animationDelay: `${delay}s` 
+    }} 
+  />
+);
+
 export const ClozeInput: React.FC<ClozeInputProps> = ({
   state,
   isReviewNeeded,
@@ -21,7 +33,13 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
   isCompact = false,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLSpanElement>(null);
   const prevStatusRef = useRef<string>(state.status);
+  const prevValueRef = useRef<string>(state.value);
+  
+  // 애니메이션 상태
+  const [showSparkles, setShowSparkles] = useState(false);
+  const [isTypingBounce, setIsTypingBounce] = useState(false);
 
   // Calculate width based on answer length
   const contentLength = Math.max(state.answer.length, state.value.length, 2);
@@ -72,15 +90,27 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
     minWidth: isCompact ? '3.5em' : isEnglishMode ? '2.3em' : '3em',
   };
 
-  // Effect: Handle focus and shake animation reset
+  // Effect: Handle status changes for animations
   useEffect(() => {
-    // If we just transitioned to wrong-1, the value was cleared in parent. 
-    // We need to ensure focus remains here.
     if (prevStatusRef.current !== state.status) {
-       // Logic handled by status class rendering
+      // 정답 시 스파클 효과
+      if (state.status === 'correct') {
+        setShowSparkles(true);
+        setTimeout(() => setShowSparkles(false), 800);
+      }
     }
     prevStatusRef.current = state.status;
   }, [state.status]);
+
+  // Effect: 타이핑 바운스 효과
+  useEffect(() => {
+    if (prevValueRef.current !== state.value && state.value.length > prevValueRef.current.length) {
+      setIsTypingBounce(true);
+      const timer = setTimeout(() => setIsTypingBounce(false), 100);
+      return () => clearTimeout(timer);
+    }
+    prevValueRef.current = state.value;
+  }, [state.value]);
 
   // Handle Enter Key
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -94,50 +124,69 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
 
   // Determine specific visual styles based on state
   let statusClasses = "";
-  let bgClass = "bg-input"; // Default background
+  let bgClass = "bg-input/80"; // Default background with slight transparency
+  let animationClasses = "";
 
   if (state.status === 'correct') {
     // Removed font-bold to prevent width shift (ch unit depends on font weight)
-    statusClasses = "border-emerald-500 text-emerald-400"; 
-    bgClass = "bg-emerald-500/20";
+    statusClasses = "border-emerald-500/80 text-emerald-500 dark:text-emerald-400"; 
+    bgClass = "bg-emerald-500/15 dark:bg-emerald-500/20";
+    animationClasses = "animate-correct-glow";
   } else if (state.status === 'wrong-1') {
-    statusClasses = "border-orange-500 animate-shake text-foreground focus:border-orange-500";
+    // 1차 오답: wobble + ripple 효과
+    statusClasses = "border-amber-500/80 text-foreground focus:border-amber-500";
+    animationClasses = "animate-wobble animate-ripple";
   } else if (state.status === 'wrong-2') {
-    statusClasses = "border-destructive animate-shake text-destructive";
-    bgClass = "bg-red-500/30"; // Strong Red for Fail/Reveal
+    // 2차 오답: 빨간 배경 (크랙 효과 제거)
+    statusClasses = "border-rose-500/80 text-rose-600 dark:text-rose-400";
+    bgClass = "bg-rose-500/20 dark:bg-rose-500/25";
   } else {
     // Idle state
     if (isReviewNeeded) {
       // Visual Spec C: Persistent Review hint - Distinct background
-      statusClasses = "border-input text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20";
-      bgClass = "bg-red-500/15"; // Subtle Red for Review
+      statusClasses = "border-border/60 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20";
+      bgClass = "bg-rose-500/10 dark:bg-rose-500/15"; // Subtle Red for Review
     } else {
-      statusClasses = "border-input focus:border-primary text-foreground focus:ring-2 focus:ring-primary/20";
-      bgClass = "bg-input";
+      statusClasses = "border-border/60 focus:border-primary text-foreground focus:ring-2 focus:ring-primary/25";
+      bgClass = "bg-input/70 dark:bg-input/80";
     }
   }
 
   return (
-    <input
-      ref={inputRef}
-      id={`input-${state.id}`}
-      type="text"
-      value={state.value}
-      disabled={state.disabled}
-      onChange={(e) => onUpdate(state.id, e.target.value)}
-      onKeyDown={handleKeyDown}
-      onFocus={() => onFocusRequest(state.id)}
-      autoComplete="off"
-      className={`
-        inline-block text-center outline-none border-b-4 rounded-lg
-        transition-all duration-200 align-baseline shadow-md
-        disabled:opacity-100 disabled:cursor-not-allowed
-        ${isCompact ? 'mx-0.5 my-0.5 px-2 py-1 text-base leading-normal border-b-2 rounded-md' : 'mx-1 my-1 px-2 py-1 text-[1.6rem] leading-normal'}
-        ${bgClass}
-        ${statusClasses}
-      `}
-      style={widthStyle}
-      aria-label="빈칸 입력"
-    />
+    <span ref={containerRef} className="relative inline-block">
+      <input
+        ref={inputRef}
+        id={`input-${state.id}`}
+        type="text"
+        value={state.value}
+        disabled={state.disabled}
+        onChange={(e) => onUpdate(state.id, e.target.value)}
+        onKeyDown={handleKeyDown}
+        onFocus={() => onFocusRequest(state.id)}
+        autoComplete="off"
+        className={`
+          inline-block text-center outline-none border-b-[3px] rounded-xl
+          transition-all duration-200 align-baseline
+          disabled:opacity-100 disabled:cursor-not-allowed
+          input-hover-scale backdrop-blur-sm
+          ${isCompact ? 'mx-0.5 my-0.5 px-2 py-1 text-base leading-normal border-b-2 rounded-lg shadow-sm' : 'mx-1 my-1 px-3 py-1.5 text-[1.5rem] leading-normal shadow-md'}
+          ${bgClass}
+          ${statusClasses}
+          ${animationClasses}
+          ${isTypingBounce ? 'animate-typing-bounce' : ''}
+        `}
+        style={widthStyle}
+        aria-label="빈칸 입력"
+      />
+      
+      {/* 스파클 효과 (정답 시) */}
+      {showSparkles && (
+        <>
+          <Sparkle x={10} y={-25} delay={0} />
+          <Sparkle x={50} y={-35} delay={0.1} />
+          <Sparkle x={90} y={-25} delay={0.15} />
+        </>
+      )}
+    </span>
   );
 };
