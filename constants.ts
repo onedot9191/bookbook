@@ -465,9 +465,9 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity3-listening-speaking',
             title: '듣기&말하기',
             content: [
-              "[First], [pick a picture].",
+              "[First], [pick a situation].",
               "[Second], [make a dialogue with key expressions].",
-              "[Third], [practice it with your partner]."
+              "[Third], [practice it with your group]."
             ]
           }
         ]
@@ -481,9 +481,9 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity3-reading',
             title: '읽기',
             content: [
-              "[First], [pick a picture].",
+              "[First], [pick a situation].",
               "[Second], [read the dialogue aloud].",
-              "[Third], [practice it with your partner]."
+              "[Third], [practice it with your group]."
             ]
           }
         ]
@@ -497,9 +497,9 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity3-writing',
             title: '쓰기',
             content: [
-              "[First], [pick a picture].",
+              "[First], [pick a situation].",
               "[Second], [fill in the blanks and write the dialogue].",
-              "[Third], [practice it with your partner]."
+              "[Third], [practice it with your group]."
             ]
           }
         ]
@@ -513,9 +513,9 @@ export const ENGLISH_DEMO_SECTIONS: EnglishDemoSectionData[] = [
             id: 'activity3-integrated',
             title: '통합',
             content: [
-              "[First], [pick a picture].",
+              "[First], [pick a situation].",
               "[Second], [read the dialogue and fill in the blanks].",
-              "[Third], [practice speaking with your partner]."
+              "[Third], [practice speaking with your group]."
             ]
           }
         ]
