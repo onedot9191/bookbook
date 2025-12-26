@@ -124,7 +124,7 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
 
   // Determine specific visual styles based on state
   let statusClasses = "";
-  let bgClass = "bg-input/80"; // Default background with slight transparency
+  let bgClass = "bg-input"; // Default background
   let animationClasses = "";
 
   if (state.status === 'correct') {
@@ -135,6 +135,7 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
   } else if (state.status === 'wrong-1') {
     // 1차 오답: wobble + ripple 효과
     statusClasses = "border-amber-500/80 text-foreground focus:border-amber-500";
+    bgClass = "bg-input";
     animationClasses = "animate-wobble animate-ripple";
   } else if (state.status === 'wrong-2') {
     // 2차 오답: 빨간 배경 (크랙 효과 제거)
@@ -148,7 +149,7 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
       bgClass = "bg-rose-500/10 dark:bg-rose-500/15"; // Subtle Red for Review
     } else {
       statusClasses = "border-border/60 focus:border-primary text-foreground focus:ring-2 focus:ring-primary/25";
-      bgClass = "bg-input/70 dark:bg-input/80";
+      bgClass = "bg-input";
     }
   }
 
@@ -168,7 +169,7 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
           inline-block text-center outline-none border-b-[3px] rounded-xl
           transition-all duration-200 align-baseline
           disabled:opacity-100 disabled:cursor-not-allowed
-          input-hover-scale backdrop-blur-sm
+          input-hover-scale
           ${isCompact ? 'mx-0.5 my-0.5 px-2 py-1 text-base leading-normal border-b-2 rounded-lg shadow-sm' : 'mx-1 my-1 px-3 py-1.5 text-[1.5rem] leading-normal shadow-md'}
           ${bgClass}
           ${statusClasses}
