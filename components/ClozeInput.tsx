@@ -60,15 +60,17 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
       multiplier = 1.0;
     }
   } else if (isEnglishMode) {
-    // 영어: 한글보다 약간 좁은 너비 적용
+    // 영어: 한글보다 약간 좁은 너비 적용 (짧은 답안은 여유있게)
     if (contentLength >= 15) {
       multiplier = 0.63;
     } else if (contentLength >= 10) {
       multiplier = 0.68;
     } else if (contentLength >= 6) {
       multiplier = 0.73;
+    } else if (contentLength >= 4) {
+      multiplier = 0.85;
     } else {
-      multiplier = 0.78;
+      multiplier = 0.9; // 3글자 이하 짧은 답안(wow, now 등)
     }
   } else {
     // 한글: 기존 로직
@@ -83,11 +85,11 @@ export const ClozeInput: React.FC<ClozeInputProps> = ({
     }
   }
   
-  const calculatedWidth = contentLength * multiplier + (isCompact ? 1.0 : isEnglishMode ? 0.58 : 0.8);
+  const calculatedWidth = contentLength * multiplier + (isCompact ? 1.0 : isEnglishMode ? 0.8 : 0.8);
   
   const widthStyle = {
     width: `${calculatedWidth}em`,
-    minWidth: isCompact ? '3.5em' : isEnglishMode ? '2.3em' : '3em',
+    minWidth: isCompact ? '3.5em' : isEnglishMode ? '3em' : '3em',
   };
 
   // Effect: Handle status changes for animations
