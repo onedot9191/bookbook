@@ -10,6 +10,120 @@ import { speakText, stopSpeaking, loadVoices } from './utils/tts';
 // Global declaration for confetti
 declare var confetti: any;
 
+// 귀여운 마스코트 캐릭터 컴포넌트
+interface MascotProps {
+  recentAnswerStatus?: 'correct' | 'wrong-1' | 'wrong-2' | null;
+  answerLevel?: number; // 정답/오답 단계 (1-4)
+}
+
+const Mascot: React.FC<MascotProps> = ({ recentAnswerStatus, answerLevel = 0 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [defaultMoodIndex, setDefaultMoodIndex] = useState(0);
+
+  // 기본 상태에서 다양한 표정 순환
+  useEffect(() => {
+    if (!recentAnswerStatus) {
+      const timer = setInterval(() => {
+        setDefaultMoodIndex(prev => (prev + 1) % 6);
+      }, 4000);
+      return () => clearInterval(timer);
+    }
+  }, [recentAnswerStatus]);
+
+  const getEmoji = () => {
+    if (isHovered) return '🤗';
+    
+    if (recentAnswerStatus === 'correct') {
+      // 정답 단계별 표정 (1-4단계) - 변화가 큰 표정들
+      const correctEmojis = ['😊', '😄', '😁', '🤩'];
+      return correctEmojis[Math.min(answerLevel - 1, 3)] || '😊';
+    } else if (recentAnswerStatus === 'wrong-1') {
+      // 1차 오답: 격려하는 표정
+      return '😅';
+    } else if (recentAnswerStatus === 'wrong-2') {
+      // 2차 오답: 더 아쉬운 표정
+      return '🥵';
+    }
+    
+    // 기본 상태
+    return '🤔';
+  };
+
+  const getMessage = () => {
+    if (recentAnswerStatus === 'correct') {
+      const messages = ['잘했어요! 👏', '훌륭해요! ✨', '완벽해요! 🎉', '최고예요! 🌟'];
+      return messages[Math.min(answerLevel - 1, 3)] || '잘했어요! 👏';
+    } else if (recentAnswerStatus === 'wrong-1') {
+      return '다시 도전! 💪';
+    } else if (recentAnswerStatus === 'wrong-2') {
+      return '괜찮아요! 다음엔 잘할 수 있어요! 😊';
+    }
+    return '화이팅! 💪';
+  };
+
+  return (
+    <div 
+      className="fixed bottom-6 right-6 z-40 cursor-pointer group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={() => {
+        // 클릭 시 재미있는 반응 (기본 이모지로 유지)
+      }}
+    >
+      <div className="relative">
+        {/* 말풍선 (hover 시 나타남) */}
+        <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-card border border-border rounded-2xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-bounce-subtle pointer-events-none">
+          <p className="text-xs font-medium text-foreground whitespace-nowrap">{getMessage()}</p>
+          <div className="absolute bottom-0 right-4 translate-y-1/2 rotate-45 w-2 h-2 bg-card border-r border-b border-border"></div>
+        </div>
+        
+        {/* 마스코트 캐릭터 */}
+        <div className={`
+          relative w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 
+          flex items-center justify-center text-5xl shadow-lg shadow-primary/30
+          transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-primary/40
+          animate-bounce-gentle
+          border-2 border-white/20
+        `}>
+          {/* 반짝이는 효과 */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/30 to-transparent animate-spin-slow opacity-50"></div>
+          
+          {/* 이모지 */}
+          <span className={`relative z-10 drop-shadow-md transition-all duration-300 group-hover:scale-110 ${
+            recentAnswerStatus === 'correct' ? 'animate-bounce' : recentAnswerStatus === 'wrong-2' ? 'animate-pulse' : ''
+          }`}>
+            {getEmoji()}
+          </span>
+        </div>
+      </div>
+      
+      <style>{`
+        @keyframes bounce-gentle {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
+        }
+        @keyframes bounce-subtle {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
+        }
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-bounce-gentle {
+          animation: bounce-gentle 3s ease-in-out infinite;
+        }
+        .animate-bounce-subtle {
+          animation: bounce-subtle 2s ease-in-out infinite;
+        }
+        .animate-spin-slow {
+          animation: spin-slow 8s linear infinite;
+        }
+      `}</style>
+    </div>
+  );
+};
+
 // 캐릭터 경주로 컴포넌트
 interface RaceTrackProps {
   progress: number; // 0-100
@@ -138,11 +252,17 @@ const App: React.FC = () => {
   const [activeSkillTab, setActiveSkillTab] = useState<string>('listening');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speakingText, setSpeakingText] = useState<string | null>(null);
+  const [recentAnswerStatus, setRecentAnswerStatus] = useState<'correct' | 'wrong' | null>(null);
+  const [answerLevel, setAnswerLevel] = useState(1); // 정답/오답 단계 (1-4)
   
   // Ref to track if we are in a transition period to prevent double triggers
   const isTransitioningRef = useRef(false);
   // Ref to track which tabs have already triggered the completion logic to prevent loops
   const completedTabsRef = useRef<Set<number>>(new Set());
+  // Ref to track previous inputStates for detecting status changes
+  const prevInputStatesRef = useRef<Record<string, InputState>>({});
+  // Ref to track consecutive correct/wrong answers
+  const consecutiveAnswersRef = useRef<{ correct: number; wrong: number }>({ correct: 0, wrong: 0 });
 
   // --- 진행률 계산 ---
   const calculateProgress = useMemo(() => {
@@ -206,6 +326,58 @@ const App: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [showToast]);
+
+  // 최근 답변 상태 추적 (마스코트 이모지 변경용)
+  useEffect(() => {
+    const prevStates = prevInputStatesRef.current;
+    const currentStates = inputStates;
+    let answerStatusChanged: 'correct' | 'wrong-1' | 'wrong-2' | null = null;
+    
+    // 각 입력 상태를 비교하여 변경된 것이 있는지 확인
+    Object.keys(currentStates).forEach(id => {
+      const prevState = prevStates[id];
+      const currentState = currentStates[id];
+      
+      // 상태가 변경되었고, 이전 상태가 'idle'이거나 없었던 경우
+      if (prevState && prevState.status !== currentState.status) {
+        if (currentState.status === 'correct') {
+          answerStatusChanged = 'correct';
+          // 연속 정답 횟수 증가
+          consecutiveAnswersRef.current.correct += 1;
+          consecutiveAnswersRef.current.wrong = 0;
+          // 단계 계산 (1-4단계)
+          const level = Math.min(consecutiveAnswersRef.current.correct, 4);
+          setAnswerLevel(level);
+        } else if (currentState.status === 'wrong-1') {
+          answerStatusChanged = 'wrong-1';
+          // 연속 오답 횟수 증가
+          consecutiveAnswersRef.current.wrong += 1;
+          consecutiveAnswersRef.current.correct = 0;
+          setAnswerLevel(1);
+        } else if (currentState.status === 'wrong-2') {
+          answerStatusChanged = 'wrong-2';
+          // 연속 오답 횟수 증가
+          consecutiveAnswersRef.current.wrong += 1;
+          consecutiveAnswersRef.current.correct = 0;
+          setAnswerLevel(2);
+        }
+      }
+    });
+    
+    // 현재 상태를 이전 상태로 저장
+    prevInputStatesRef.current = currentStates;
+    
+    // 상태가 변경된 경우에만 업데이트
+    if (answerStatusChanged) {
+      setRecentAnswerStatus(answerStatusChanged);
+      // 2초 후 초기화
+      const timer = setTimeout(() => {
+        setRecentAnswerStatus(null);
+        setAnswerLevel(1);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [inputStates]);
 
   // TTS 음성 목록 로드
   useEffect(() => {
@@ -2200,10 +2372,6 @@ const collectPolicyDetailInputIds = (
                     </button>
                 </div>
             </div>
-            
-            <div className="absolute bottom-8 text-muted-foreground text-sm font-medium opacity-50 tracking-wide">
-                Daegu Metropolitan Office of Education
-            </div>
 
             {/* Policy Modal - Enhanced */}
             {showPolicyModal && (
@@ -2359,6 +2527,9 @@ const collectPolicyDetailInputIds = (
                     </div>
                 </div>
             )}
+
+            {/* 귀여운 마스코트 캐릭터 */}
+            <Mascot recentAnswerStatus={recentAnswerStatus} answerLevel={answerLevel} />
         </div>
     );
   }
@@ -2416,6 +2587,9 @@ const collectPolicyDetailInputIds = (
                     <span className="text-lg font-bold tracking-wide">{showToast.message}</span>
                 </div>
             )}
+
+            {/* 귀여운 마스코트 캐릭터 */}
+            <Mascot recentAnswerStatus={recentAnswerStatus} answerLevel={answerLevel} />
         </div>
       );
   }
@@ -2660,6 +2834,9 @@ const collectPolicyDetailInputIds = (
             <span className="text-lg font-bold tracking-wide">{showToast.message}</span>
           </div>
         )}
+
+        {/* 귀여운 마스코트 캐릭터 */}
+        <Mascot recentAnswerStatus={recentAnswerStatus} />
       </div>
     );
   }
@@ -2761,6 +2938,9 @@ const collectPolicyDetailInputIds = (
             <span className="text-xl font-bold">{showToast.message}</span>
           </div>
         )}
+
+        {/* 귀여운 마스코트 캐릭터 */}
+        <Mascot recentAnswerStatus={recentAnswerStatus} />
         
         <style>{`
           @keyframes bounce-gentle {
@@ -3516,6 +3696,9 @@ const collectPolicyDetailInputIds = (
             <span className="text-xl font-bold">{showToast.message}</span>
           </div>
         )}
+
+        {/* 귀여운 마스코트 캐릭터 */}
+        <Mascot recentAnswerStatus={recentAnswerStatus} />
         
         <style>{`
           @keyframes bounce-gentle {
@@ -3693,6 +3876,9 @@ const collectPolicyDetailInputIds = (
             <span className="text-lg font-bold tracking-wide">{showToast.message}</span>
           </div>
         )}
+
+        {/* 귀여운 마스코트 캐릭터 */}
+        <Mascot recentAnswerStatus={recentAnswerStatus} />
       </div>
     );
   }
@@ -3775,6 +3961,9 @@ const collectPolicyDetailInputIds = (
             <span className="text-lg font-bold tracking-wide">{showToast.message}</span>
         </div>
       )}
+
+      {/* 귀여운 마스코트 캐릭터 */}
+      <Mascot recentAnswerStatus={recentAnswerStatus} />
     </div>
   );
 };
