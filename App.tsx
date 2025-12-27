@@ -19,35 +19,86 @@ interface RaceTrackProps {
 const RaceTrack: React.FC<RaceTrackProps> = ({ progress, className = '' }) => {
   const isComplete = progress >= 100;
   
+  // 캐릭터 위치 계산 (0%일 때도 짤리지 않도록 최소값 보장)
+  const characterPosition = Math.max(8, Math.min(progress, 92));
+  
+  // 각 지점을 통과했는지 확인
+  const checkpoints = [25, 50, 75];
+  const isCheckpointPassed = (checkpoint: number) => progress >= checkpoint;
+  
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      {/* 경주로 */}
-      <div className="relative w-40 sm:w-56 h-9 bg-gradient-to-r from-muted/80 to-muted/60 rounded-full overflow-hidden border border-border/50 shadow-inner">
-        {/* 트랙 라인 (점선) */}
-        <div className="absolute inset-0 flex items-center justify-around px-3">
-          {[...Array(10)].map((_, i) => (
-            <div key={i} className="w-1 h-1 bg-border/50 rounded-full" />
-          ))}
+      {/* 경주로 (측면 시점) */}
+      <div className="relative w-64 sm:w-96 h-10">
+        {/* 트랙 바닥 (측면에서 본 도로) */}
+        <div className="absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-r from-slate-600 via-slate-500 to-slate-600 rounded-sm border-t border-slate-400/40 border-b border-slate-800/60 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.3)]">
+          {/* 트랙 중앙선 (측면 시점) */}
+          <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-slate-300/50 to-transparent -translate-y-1/2" />
+          
+          {/* 구간 표시 (트랙 내부) */}
+          {checkpoints.map((marker) => {
+            const passed = isCheckpointPassed(marker);
+            return (
+              <div 
+                key={marker}
+                className={`absolute top-1/2 -translate-y-1/2 w-[1px] h-full transition-all duration-500 ${
+                  passed ? 'bg-blue-400/60' : 'bg-slate-400/40'
+                }`}
+                style={{ left: `${marker}%` }}
+              />
+            );
+          })}
+        
+        {/* 구간 마커 (트랙 위) */}
+        {checkpoints.map((marker) => {
+          const passed = isCheckpointPassed(marker);
+          return (
+            <div 
+              key={`marker-${marker}`}
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10"
+              style={{ left: `${marker}%` }}
+            >
+              <div 
+                className={`rounded-full border transition-all duration-500 ${
+                  passed 
+                    ? 'w-2.5 h-2.5 bg-blue-400 border-blue-300 shadow-[0_0_8px_rgba(96,165,250,0.6)]' 
+                    : 'w-1.5 h-1.5 bg-slate-400/60 border-slate-300/40'
+                }`}
+              />
+            </div>
+          );
+        })}
+          
+          {/* 진행률 바 */}
+          <div 
+            className={`absolute bottom-0 left-0 h-full transition-all duration-700 ease-out ${
+              isComplete 
+                ? 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 shadow-[0_0_20px_rgba(251,191,36,0.5)]' 
+                : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 shadow-[0_0_15px_rgba(99,102,241,0.4)]'
+            }`}
+            style={{ width: `${Math.min(progress, 100)}%`, clipPath: 'inset(0 0 0 0 round 2px)' }}
+          />
+          
+          {/* 진행률 바 상단 하이라이트 */}
+          <div 
+            className={`absolute bottom-0 left-0 h-1/2 w-full transition-all duration-700 ease-out opacity-40 ${
+              isComplete ? 'bg-gradient-to-r from-transparent via-white/60 to-transparent' : 'bg-gradient-to-r from-transparent via-white/50 to-transparent'
+            }`}
+            style={{ width: `${Math.min(progress, 100)}%`, clipPath: 'inset(0 0 50% 0 round 2px 2px 0 0)' }}
+          />
         </div>
         
-        {/* 진행률 바 */}
-        <div 
-          className={`absolute left-0 top-0 h-full transition-all duration-700 ease-out rounded-full ${
-            isComplete 
-              ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 shadow-lg shadow-amber-500/30' 
-              : 'bg-gradient-to-r from-primary/50 via-primary/60 to-primary/70'
-          }`}
-          style={{ width: `${Math.min(progress, 100)}%` }}
-        />
+        {/* 트랙 그림자 (깊이감 표현) */}
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-black/20 to-transparent" />
         
-        {/* 캐릭터 (오른쪽을 바라보는 달리는 사람) */}
+        {/* 캐릭터 (트랙 위에 서 있는 사람) */}
         <div 
-          className="absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-out"
-          style={{ left: `calc(${Math.min(progress, 90)}% - 10px)` }}
+          className="absolute bottom-3 transition-all duration-700 ease-out z-20"
+          style={{ left: `calc(${characterPosition}% - 14px)` }}
         >
           <span 
-            className={`text-lg inline-block ${isComplete ? 'animate-bounce' : ''}`} 
-            style={{ transform: 'scaleX(-1)' }}
+            className={`text-2xl inline-block drop-shadow-lg ${isComplete ? 'animate-bounce' : ''}`} 
+            style={{ transform: 'scaleX(-1)', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.4))' }}
             role="img" 
             aria-label="runner"
           >
@@ -55,14 +106,16 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ progress, className = '' }) => {
           </span>
         </div>
         
-        {/* 결승선 */}
-        <div className="absolute right-2 top-1/2 -translate-y-1/2">
-          <span className="text-base" role="img" aria-label="finish">🏁</span>
+        {/* 결승선 (트랙 위의 깃발) */}
+        <div className="absolute bottom-3 right-2 z-10 drop-shadow-lg">
+          <span className="text-2xl inline-block" style={{ filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.4))' }} role="img" aria-label="finish">🚩</span>
         </div>
       </div>
       
       {/* 퍼센트 표시 */}
-      <span className={`text-sm font-bold min-w-[3rem] tabular-nums ${isComplete ? 'text-amber-500' : 'text-muted-foreground'}`}>
+      <span className={`text-sm font-bold min-w-[3rem] tabular-nums transition-colors duration-300 ${
+        isComplete ? 'text-amber-400' : 'text-slate-300'
+      }`}>
         {Math.round(progress)}%
       </span>
     </div>
@@ -102,26 +155,32 @@ const App: React.FC = () => {
     if (showIntroQuiz) {
       relevantInputs = allInputs.filter(s => s.id.startsWith('intro-'));
     } else if (showInterview) {
-      relevantInputs = allInputs.filter(s => s.id.startsWith('interview-'));
+      // interview 탭별로 필터링 (interview-{activeTab}- 패턴)
+      relevantInputs = allInputs.filter(s => s.id.startsWith(`interview-${activeTab}-`));
     } else if (showEnglishDemo) {
-      relevantInputs = allInputs.filter(s => s.id.startsWith('english-demo-'));
+      // english-demo 탭별로 필터링 (english-demo-{activeTab}- 패턴)
+      relevantInputs = allInputs.filter(s => s.id.startsWith(`english-demo-${activeTab}-`));
     } else if (selectedPolicyDetail) {
-      relevantInputs = allInputs.filter(s => s.id.startsWith('policy-detail-'));
+      // policy-detail 탭별로 필터링 (policy-detail-{activePolicyTab}- 패턴)
+      relevantInputs = allInputs.filter(s => s.id.startsWith(`policy-detail-${activePolicyTab}-`));
     } else if (showPolicy) {
-      relevantInputs = allInputs.filter(s => s.id.startsWith('policy-'));
+      // policy 탭별로 필터링 (policy-{activePolicyTab}- 패턴)
+      relevantInputs = allInputs.filter(s => s.id.startsWith(`policy-${activePolicyTab}-`));
     } else if (!isLandingPage) {
-      // 메인 섹션
-      relevantInputs = allInputs.filter(s => !s.id.startsWith('intro-') && 
-                                             !s.id.startsWith('interview-') && 
-                                             !s.id.startsWith('english-demo-') && 
-                                             !s.id.startsWith('policy-'));
+      // 메인 섹션 - 탭별로 필터링 ({activeTab}- 패턴, 숫자로 시작)
+      relevantInputs = allInputs.filter(s => {
+        // 숫자로 시작하는 ID만 (메인 섹션)
+        if (!/^\d+-/.test(s.id)) return false;
+        // 현재 activeTab과 일치하는 섹션만
+        return s.id.startsWith(`${activeTab}-`);
+      });
     }
     
     if (relevantInputs.length === 0) return 0;
     
     const completedCount = relevantInputs.filter(s => s.disabled || s.status === 'correct' || s.status === 'wrong-2').length;
     return (completedCount / relevantInputs.length) * 100;
-  }, [inputStates, showIntroQuiz, showInterview, showEnglishDemo, showPolicy, selectedPolicyDetail, isLandingPage]);
+  }, [inputStates, showIntroQuiz, showInterview, showEnglishDemo, showPolicy, selectedPolicyDetail, isLandingPage, activeTab, activePolicyTab]);
 
 
   // --- Initialization & Parsing ---
@@ -164,6 +223,28 @@ const App: React.FC = () => {
 
     return () => clearInterval(checkSpeaking);
   }, [isSpeaking]);
+
+  // '1. 비전'과 '2. 학습자상' 탭에서 스크롤 고정
+  useEffect(() => {
+    // 메인 섹션이고 activeTab이 0 또는 1일 때 (비전, 학습자상)
+    const shouldFixScroll = !isLandingPage && 
+                            !showIntroQuiz && 
+                            !showInterview && 
+                            !showEnglishDemo && 
+                            !showPolicy && 
+                            !selectedPolicyDetail && 
+                            (activeTab === 0 || activeTab === 1);
+    
+    if (shouldFixScroll) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isLandingPage, showIntroQuiz, showInterview, showEnglishDemo, showPolicy, selectedPolicyDetail, activeTab]);
 
   // 텍스트 읽기 함수
   const handleSpeak = (text: string) => {
@@ -558,11 +639,14 @@ const App: React.FC = () => {
   };
 
   // Helper: Smooth focus and scroll to input element
-  const focusAndScrollToInput = (element: HTMLElement) => {
+  const focusAndScrollToInput = (element: HTMLElement, skipScroll: boolean = false) => {
     if (!element) return;
     
     // Focus first
     element.focus();
+    
+    // Skip scroll if requested (e.g., for intro quiz)
+    if (skipScroll) return;
     
     // Always use smooth scroll when moving to next input
     // Use requestAnimationFrame for smoother, more reliable scrolling
@@ -874,7 +958,7 @@ const App: React.FC = () => {
       if (nextId) {
         const el = document.getElementById(`input-${nextId}`);
         if (el) {
-          focusAndScrollToInput(el);
+          focusAndScrollToInput(el, showIntroQuiz); // Skip scroll for intro quiz
         }
       } else if (showEnglishDemo) {
         // 현재 섹션의 모든 빈칸이 비활성화된 경우
