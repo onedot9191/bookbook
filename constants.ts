@@ -1069,7 +1069,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
             title: '기초·기본학력 지원',
             children: [
               {
-                title: '맞춤형 기초·기본 학력 지원',
+                title: '기초학력 향상 지원 3단계 안전망',
                 children: [
                   {
                     title: '목표: [기초학력] 보장',
