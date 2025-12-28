@@ -133,8 +133,8 @@ interface RaceTrackProps {
 const RaceTrack: React.FC<RaceTrackProps> = ({ progress, className = '' }) => {
   const isComplete = progress >= 100;
   
-  // 캐릭터 위치 계산 (0%일 때도 짤리지 않도록 최소값 보장)
-  const characterPosition = Math.max(8, Math.min(progress, 92));
+  // 캐릭터 위치 계산 (progress 값 그대로 사용, 0%일 때 정확히 0% 위치에 배치)
+  const characterPosition = Math.min(progress, 100);
   
   // 각 지점을 통과했는지 확인
   const checkpoints = [25, 50, 75];
@@ -281,11 +281,14 @@ const App: React.FC = () => {
       // english-demo 탭별로 필터링 (english-demo-{activeTab}- 패턴)
       relevantInputs = allInputs.filter(s => s.id.startsWith(`english-demo-${activeTab}-`));
     } else if (selectedPolicyDetail) {
-      // policy-detail 탭별로 필터링 (policy-detail-{activePolicyTab}- 패턴)
-      relevantInputs = allInputs.filter(s => s.id.startsWith(`policy-detail-${activePolicyTab}-`));
+      // policy-detail 탭별로 필터링 (policy-detail-{policyDetailIdx}-top-{activePolicyTab}- 패턴)
+      const policyDetailIdx = POLICY_DETAILS.findIndex(p => p.id === selectedPolicyDetail);
+      if (policyDetailIdx !== -1) {
+        relevantInputs = allInputs.filter(s => s.id.startsWith(`policy-detail-${policyDetailIdx}-top-${activePolicyTab}-`));
+      }
     } else if (showPolicy) {
-      // policy 탭별로 필터링 (policy-{activePolicyTab}- 패턴)
-      relevantInputs = allInputs.filter(s => s.id.startsWith(`policy-${activePolicyTab}-`));
+      // policy 탭별로 필터링 (policy-{activeTab}- 패턴)
+      relevantInputs = allInputs.filter(s => s.id.startsWith(`policy-${activeTab}-`));
     } else if (!isLandingPage) {
       // 메인 섹션 - 탭별로 필터링 ({activeTab}- 패턴, 숫자로 시작)
       relevantInputs = allInputs.filter(s => {
