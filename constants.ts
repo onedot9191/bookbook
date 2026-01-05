@@ -1069,7 +1069,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
             title: '기초·기본학력 지원',
             children: [
               {
-                title: '기초학력 향상 지원 3단계 안전망',
+                title: '기초학력 향상 지원 [3단계 안전망]',
                 children: [
                   {
                     title: '목표: [기초학력] 보장',
@@ -1426,7 +1426,7 @@ export const POLICY_DETAILS: PolicyDetailData[] = [
                     ]
                   },
                   {
-                    title: '교실 동행 멘토링 운영 신설',
+                    title: '[교실 동행 멘토링] 운영 신설',
                     children: [
                       { title: '개념기반 탐구수업 멘토-멘티 교사연구회(초)' },
                       { title: '수업 전문성 신장 [수수친(수석교사 수업 친구)](초)' }
