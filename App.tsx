@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { BookOpen, CheckCircle, ChevronRight, AlertTriangle, Lightbulb, Target, Shield, Users, Heart, Eye, RotateCcw, Home, List, X, Volume2, VolumeX } from 'lucide-react';
+import { BookOpen, CheckCircle, ChevronRight, AlertTriangle, Lightbulb, Target, Shield, Users, Heart, Eye, RotateCcw, Home, List, X, Volume2, VolumeX, Sparkles } from 'lucide-react';
 import { SECTIONS, INTRO_CONTENT, INTERVIEW_SECTIONS, ENGLISH_DEMO_SECTIONS, POLICY_SECTIONS, POLICY_DETAILS } from './constants';
 import { InputState, STORAGE_KEY } from './types';
 import { ClozeInput } from './components/ClozeInput';
@@ -2524,6 +2524,30 @@ const collectPolicyDetailInputIds = (
                                         5. 교육공동체가 힘을 모아 배움의 장을 넓히겠습니다.
                                     </span>
                                     <ChevronRight className="text-muted-foreground group-hover:text-violet-500 group-hover:translate-x-1 transition-all duration-300" size={20} />
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    playSound('complete');
+                                    setShowPolicyModal(false);
+                                    setSelectedPolicyDetail('new-year-message');
+                                    setActivePolicyTab(0);
+                                    setIsLandingPage(false);
+                                    setShowIntroQuiz(false);
+                                    setShowInterview(false);
+                                    setShowPolicy(false);
+                                }}
+                                className="w-full text-left p-5 bg-gradient-to-r from-indigo-500/8 to-cyan-500/8 hover:from-indigo-500/15 hover:to-cyan-500/15 border border-indigo-500/15 hover:border-indigo-500/30 rounded-xl transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg hover:shadow-indigo-500/10 group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-gradient-to-br from-indigo-500/25 to-cyan-500/25 p-3.5 rounded-xl group-hover:from-indigo-500/35 group-hover:to-cyan-500/35 transition-all duration-300 shadow-sm">
+                                        <Sparkles className="text-indigo-500" size={22} />
+                                    </div>
+                                    <span className="text-base font-semibold text-foreground flex-1 leading-relaxed">
+                                        6. 신년사
+                                    </span>
+                                    <ChevronRight className="text-muted-foreground group-hover:text-indigo-500 group-hover:translate-x-1 transition-all duration-300" size={20} />
                                 </div>
                             </button>
                         </div>
